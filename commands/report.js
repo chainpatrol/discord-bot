@@ -20,9 +20,9 @@ module.exports = {
       const response = await axios.post(
         "https://app.chainpatrol.io/api/v2/report",
         {
-          organizationSlug: "mountaintop",
-          title: "Scam targetting mountaintop with an airdrop",
-          description: "test description",
+          discordGuildId: interaction.guild.id,
+          title: "Discord Report",
+          description: `reported by user ${interaction.user.id}`,
           assets: [
             {
               content: url,

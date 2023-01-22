@@ -20,7 +20,7 @@ module.exports = {
       const response = await axios.post(
         "https://app.chainpatrol.io/api/v2/report",
         {
-          discordGuildId: interaction.guild.id,
+          discordGuildId: interaction.guildId,
           title: "Discord Report",
           description: `reported by user ${interaction.user.id}`,
           assets: [

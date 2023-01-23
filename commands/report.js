@@ -30,6 +30,7 @@ module.exports = {
               type: "URL",
             },
           ],
+          attachmentUrls: [],
         }
       );
 

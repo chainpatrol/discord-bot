@@ -4,6 +4,9 @@ const { REST, Routes } = require("discord.js");
 const fs = require("node:fs");
 const os = require("os");
 
+// add dot env
+require("dotenv").config();
+
 const clientId = process.env["DISCORD_APPLICATION_ID"];
 const guildId = process.env["TEST_DISCORD_SERVER_ID"];
 const token = process.env["DISCORD_BOT_SECRET"];
@@ -31,7 +34,9 @@ const deployCommands = async () => {
     );
 
     if (process.env.DISCORD_DEPLOY_GLOBAL) {
-      await rest.put(Routes.applicationCommands(clientId), { body: commands });
+      const data = await rest.put(Routes.applicationCommands(clientId), {
+        body: commands,
+      });
 
       console.log(
         `Successfully reloaded ${data.length} application (/) commands across all servers (global).`
@@ -52,6 +57,8 @@ const deployCommands = async () => {
     console.error(error);
   }
 };
+
+deployCommands();
 
 module.exports = {
   deployCommands,

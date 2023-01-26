@@ -22,8 +22,8 @@ module.exports = {
         {
           discordGuildId: interaction.guildId,
           title: "Discord Report",
-          description: `reported by discord user ${username} , Discord ID: ${interaction.user.id}`,
-          contactInfo: `discord user ${username} , Discord ID: ${interaction.user.id}`,
+          description: `reported by discord user ${interaction.user.username} , Discord ID: ${interaction.user.id}`,
+          contactInfo: `discord user ${interaction.user.username} , Discord ID: ${interaction.user.id}`,
           assets: [
             {
               content: url,

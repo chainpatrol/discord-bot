@@ -18,9 +18,9 @@ module.exports = {
       // submit report
       const url = interaction.options.getString("url");
       const response = await axios.post(
-        "https://app.chainpatrol.io/api/v2/report",
+        "https://app.chainpatrol.io/api/v2/report/create",
         {
-          discordGuildId: interaction.guild.id,
+          discordGuildId: interaction.guildId,
           title: "Discord Report",
           description: `reported by user ${interaction.user.id}`,
           assets: [
@@ -30,6 +30,7 @@ module.exports = {
               type: "URL",
             },
           ],
+          attachmentUrls: [],
         }
       );
 

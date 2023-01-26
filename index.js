@@ -3,7 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 require("dotenv").config();
-const { deployCommands } = require("./deploy-commands");
+// const { deployCommands } = require("./deploy-commands");
 
 const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
 

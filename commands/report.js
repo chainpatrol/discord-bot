@@ -35,8 +35,6 @@ module.exports = {
         }
       );
 
-      console.log("create response data", response.data);
-
       const escapedUrl = url.replace(".", "(dot)");
 
       await interaction.reply(

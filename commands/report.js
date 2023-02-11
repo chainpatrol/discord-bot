@@ -38,7 +38,7 @@ module.exports = {
       const escapedUrl = url.replace(".", "(dot)");
 
       await interaction.reply(
-        `✅ Thanks for submitting a report for ${escapedUrl} ! \n\nWe've sent this report to the ${response.data.organization.name} team and ChainPatrol to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`
+        `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.data.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`
       );
     } catch (error) {
       // Handle errors

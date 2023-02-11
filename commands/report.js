@@ -35,7 +35,9 @@ module.exports = {
         }
       );
 
-      await interaction.reply(`Report sent, ID: ${response.data.id}`);
+      await interaction.reply(
+        `Report ${response.data.id} sent to ${response.data.organization.name} for ${url}`
+      );
     } catch (error) {
       // Handle errors
       console.error("error", error);

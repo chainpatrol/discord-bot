@@ -37,8 +37,10 @@ module.exports = {
 
       console.log("create response data", response.data);
 
+      const escapedUrl = url.replace(".", "(dot)");
+
       await interaction.reply(
-        `Report ${response.data.id} sent to ${response.data.organization.name} for ${url}`
+        `Report ${response.data.id} sent to ${response.data.organization.name} for ${escapedUrl}`
       );
     } catch (error) {
       // Handle errors

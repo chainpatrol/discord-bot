@@ -35,6 +35,8 @@ module.exports = {
         }
       );
 
+      console.log("create response data", response.data);
+
       await interaction.reply(
         `Report ${response.data.id} sent to ${response.data.organization.name} for ${url}`
       );

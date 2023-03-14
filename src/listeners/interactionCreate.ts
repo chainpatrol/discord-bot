@@ -2,6 +2,8 @@ import { Events } from "discord.js";
 import { CustomClient } from "src/client";
 
 export default (client: CustomClient) => {
+  console.log("InteractionCreate listener loaded.");
+
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) {
       return;

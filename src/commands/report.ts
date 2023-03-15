@@ -16,8 +16,6 @@ export async function execute(interaction: CommandInteraction) {
     return;
   }
 
-  await interaction.deferReply();
-
   try {
     const { guildId, user, options } = interaction;
     const url = options.getString("url", true);

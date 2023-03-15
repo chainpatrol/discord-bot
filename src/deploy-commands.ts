@@ -1,7 +1,7 @@
 import { REST, Routes } from "discord.js";
 import fs from "node:fs";
 import path from "node:path";
-import { env } from "src/env";
+import { env } from "./env";
 
 const clientId = env["DISCORD_APPLICATION_ID"];
 const guildId = env["TEST_DISCORD_SERVER_ID"];

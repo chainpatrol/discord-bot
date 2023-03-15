@@ -29,13 +29,13 @@ export async function execute(interaction: CommandInteraction) {
 
     if (response.data.status === "BLOCKED") {
       await interaction.reply(
-        `⚠️ **Warning** ⚠️ \n\nThis link is a scam! \`${escapedUrl}\` \n\nPlease do not click on this link.`
+        `🚨 **Alert** 🚨 \n\nThis link is a scam! \`${escapedUrl}\` \n\n_Please **DO NOT** click on this link._`
       );
     } else if (response.data.status === "ALLOWED") {
       await interaction.reply(`✅ This link looks safe! \`${escapedUrl}\``);
     } else if (response.data.status === "UNKNOWN") {
       await interaction.reply(
-        `⚠️ **Warning** ⚠️ \n\nThis link is not currently in our database. \`${escapedUrl}\` \n\nPlease be careful and do not click on this link unless you are sure it's safe.`
+        `⚠️ **Warning** ⚠️ \n\nThis link is not currently in our database: \`${escapedUrl}\` \n\n_Please be careful and **DO NOT** click on this link unless you are sure it's safe._`
       );
     } else {
       await interaction.reply(

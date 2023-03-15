@@ -1,19 +1,24 @@
 {
-  "name": "nodejs",
+  "name": "@chainpatrol/discord-bot",
+  "private": true,
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "ts-node src/index.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/node": "^18.0.6",
     "axios": "^1.2.2",
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
-    "node-fetch": "^3.2.6"
+    "node-fetch": "^3.2.6",
+    "ts-node": "^10.9.1",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.6",
+    "typescript": "^4.9.5"
   }
 }

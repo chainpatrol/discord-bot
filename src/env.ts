@@ -5,6 +5,8 @@ require("dotenv").config();
 const envSchema = z.object({
   DISCORD_APPLICATION_ID: z.string(),
   DISCORD_BOT_SECRET: z.string(),
+  TEST_DISCORD_SERVER_ID: z.string().optional(),
+  DISCORD_DEPLOY_GLOBAL: z.boolean().optional().default(false),
 });
 
 const result = envSchema.safeParse(process.env);

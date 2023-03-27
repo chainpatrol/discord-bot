@@ -1,5 +1,6 @@
 import axios from "axios";
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import { env } from "../env";
 
 export const data = new SlashCommandBuilder()
   .setName("check")
@@ -20,7 +21,7 @@ export async function execute(interaction: CommandInteraction) {
 
     // check url
     const response = await axios.post(
-      "https://app.chainpatrol.io/api/v2/asset/check",
+      `${env.CHAINPATROL_API_URL}/api/v2/asset/check`,
       {
         type: "URL",
         content: url,

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import { env } from "../env";
 
 export const data = new SlashCommandBuilder()
   .setName("report")
@@ -23,7 +24,7 @@ export async function execute(interaction: CommandInteraction) {
 
     // submit report
     const response = await axios.post(
-      "https://app.chainpatrol.io/api/v2/report/create",
+      `${env.CHAINPATROL_API_URL}/api/v2/report/create`,
       {
         discordGuildId: guildId,
         title: "Discord Report",

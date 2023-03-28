@@ -1,8 +1,10 @@
 import axios from "axios";
 import {
   ButtonStyle,
+  ChannelType,
   CommandInteraction,
   ComponentType,
+  GuildBasedChannel,
   SlashCommandBuilder,
 } from "discord.js";
 import { env } from "../env";
@@ -34,6 +36,7 @@ export const data = new SlashCommandBuilder()
           .setName("channel")
           .setDescription("The channel to post in")
           .setRequired(true)
+          .addChannelTypes(ChannelType.GuildText)
       )
   );
 
@@ -184,6 +187,8 @@ async function disconnect(interaction: CommandInteraction) {
 
 async function getDiscordGuildStatus(guildId: string): Promise<{
   connected: boolean;
+  guildId?: string;
+  channelId?: string;
   organizationName: string;
   organizationUrl: string;
 } | null> {
@@ -226,20 +231,36 @@ async function status(interaction: CommandInteraction) {
       return;
     }
 
-    const { connected, organizationName, organizationUrl } = connectionStatus;
+    const { connected, channelId, organizationName, organizationUrl } =
+      connectionStatus;
 
-    if (connected) {
-      await interaction.reply({
-        ephemeral: true,
-        content: `✅ The bot is connected to [${organizationName}](${organizationUrl}) on ChainPatrol`,
-      });
-    } else {
+    if (!connected) {
       await interaction.reply({
         ephemeral: true,
         content:
           "❌ The bot is not connected to any organization on ChainPatrol. Run `/setup connect` to connect the bot to your organization",
       });
+      return;
     }
+
+    let channel: GuildBasedChannel | null = null;
+
+    if (channelId && interaction.guild) {
+      channel = await interaction.guild.channels.fetch(channelId);
+    }
+
+    if (!channel) {
+      await interaction.reply({
+        ephemeral: true,
+        content: `✅ The bot is connected to [${organizationName}](${organizationUrl}) on ChainPatrol`,
+      });
+      return;
+    }
+
+    await interaction.reply({
+      ephemeral: true,
+      content: `✅ The bot is connected to [${organizationName}](${organizationUrl}) on ChainPatrol and is posting alerts to <#${channelId}>`,
+    });
   } catch (e) {
     console.error("error", e);
     await interaction.reply({
@@ -249,4 +270,63 @@ async function status(interaction: CommandInteraction) {
   }
 }
 
-async function feed(interaction: CommandInteraction) {}
+async function feed(interaction: CommandInteraction) {
+  const guildId = interaction.guildId;
+
+  if (!guildId) {
+    return;
+  }
+
+  if (!interaction.isChatInputCommand()) {
+    return;
+  }
+
+  const channel = interaction.options.getChannel("channel", true);
+
+  try {
+    const connectionStatus = await getDiscordGuildStatus(guildId);
+
+    if (!connectionStatus) {
+      await interaction.reply({
+        ephemeral: true,
+        content: "Error checking bot status",
+      });
+      return;
+    }
+
+    if (!connectionStatus.connected) {
+      await interaction.reply({
+        ephemeral: true,
+        content:
+          "❌ The bot is not connected to any organization on ChainPatrol. Run `/setup connect` to connect the bot to your organization",
+      });
+      return;
+    }
+
+    // Display a button to open the ChainPatrol connect feed page
+    await interaction.reply({
+      ephemeral: true,
+      content:
+        "Click the button below to connect your ChainPatrol organization to this channel. After connecting, you can run `/setup status` to check the status of the bot's connection",
+      components: [
+        {
+          type: ComponentType.ActionRow,
+          components: [
+            {
+              type: ComponentType.Button,
+              style: ButtonStyle.Link,
+              label: "Connect Feed",
+              url: `${env.CHAINPATROL_API_URL}/admin/connect-feed/discord?guildId=${guildId}&channelId=${channel.id}&channelName=${channel.name}`,
+            },
+          ],
+        },
+      ],
+    });
+  } catch (e) {
+    console.error("error", e);
+    await interaction.reply({
+      ephemeral: true,
+      content: "Error setting up feed",
+    });
+  }
+}

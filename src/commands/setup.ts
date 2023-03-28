@@ -107,18 +107,16 @@ async function connect(interaction: CommandInteraction) {
     await interaction.reply({
       ephemeral: true,
       content:
-        "The bot is already connected to an organization on ChainPatrol. Run `/chainpatrol setup disconnect` to disconnect the bot from your organization if you're an owner",
+        "The bot is already connected to an organization on ChainPatrol. Run `/setup disconnect` to disconnect the bot from your organization if you're an owner",
     });
     return;
   }
 
   // Display a button to open the ChainPatrol login page
-  // When the user clicks the button, open the login page in a new tab
-  // When the user logs in, redirect them to a page that will send a message to the bot
-  // The bot will then save the user's token and organization ID
   await interaction.reply({
     ephemeral: true,
-    content: "Click the button below to connect your ChainPatrol organization",
+    content:
+      "Click the button below to connect your ChainPatrol organization. After connecting, you can run `/setup status` to check the status of the bot's connection",
     components: [
       {
         type: ComponentType.ActionRow,
@@ -167,7 +165,7 @@ async function disconnect(interaction: CommandInteraction) {
   await interaction.reply({
     ephemeral: true,
     content:
-      "Click the button below to disconnect your ChainPatrol organization",
+      "Click the button below to disconnect your ChainPatrol organization. After disconnecting, you can run `/setup status` to check the status of the bot's connection",
     components: [
       {
         type: ComponentType.ActionRow,
@@ -239,7 +237,7 @@ async function status(interaction: CommandInteraction) {
       await interaction.reply({
         ephemeral: true,
         content:
-          "❌ The bot is not connected to any organization on ChainPatrol",
+          "❌ The bot is not connected to any organization on ChainPatrol. Run `/setup connect` to connect the bot to your organization",
       });
     }
   } catch (e) {

@@ -5,6 +5,7 @@ import {
   CommandInteraction,
   ComponentType,
   GuildBasedChannel,
+  PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
 import { env } from "../env";
@@ -12,6 +13,9 @@ import { env } from "../env";
 export const data = new SlashCommandBuilder()
   .setName("setup")
   .setDescription("sets up the bot")
+  .setDefaultMemberPermissions(
+    PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild
+  )
   .addSubcommand((subcommand) =>
     subcommand
       .setName("connect")

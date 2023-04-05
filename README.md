@@ -14,14 +14,13 @@ servers
 
 </div>
 
----
-
 ## Features :rocket:
 
 - :white_check_mark: Check URLs against ChainPatrol's blocklist of known
   phishing sites using the `/chainpatrol check` command.
 - :police_car: Report scam URLs to ChainPatrol using the `/chainpatrol report`
   command.
+- :scroll: View a feed of scam reports for your organization in dedicated Discord channel
 
 ## Contributing
 

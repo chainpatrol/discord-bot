@@ -1,6 +1,6 @@
 <div align="center">
 
-<img width="860" alt="ChainPatrol + Discord" src="https://mintlify.s3-us-west-1.amazonaws.com/chainpatrol/images/discord-bot.png">
+<img width="860" alt="ChainPatrol + Discord" src="https://user-images.githubusercontent.com/8302959/230222279-86f4fc9a-5fe5-4d23-affb-4b706bf963a1.png">
 
 # ChainPatrol Discord Bot
 

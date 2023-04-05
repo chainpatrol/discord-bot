@@ -1,6 +1,6 @@
 <div align="center">
 
-<img width="860" alt="ChainPatrol + Discord" src="https://user-images.githubusercontent.com/8302959/230219952-524a1942-2643-4f55-bec0-d69b2fb5f1ca.png">
+<img width="860" alt="ChainPatrol + Discord" src="https://mintlify.s3-us-west-1.amazonaws.com/chainpatrol/images/discord-bot.png">
 
 # ChainPatrol Discord Bot
 
@@ -22,7 +22,15 @@ servers
   command.
 - :scroll: View a feed of scam reports for your organization in dedicated Discord channel
 
-## Contributing
+### Coming Soon :soon:
+
+- :trophy: Display the ChainPatrol leaderboard of top reporters using the
+  `/leaderboard` command.
+- :eyes: Regular scans of server messages to detect suspicious activity.
+- :triangular_flag_on_post: Automatic notifications of potential scams to keep
+  users informed and safe
+
+## Contributing :raised_hands:
 
 We welcome contributions from anyone interested in enhancing the security of the
 web3 community. If you would like to contribute to the project, please feel free

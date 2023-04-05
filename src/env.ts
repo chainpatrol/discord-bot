@@ -8,7 +8,7 @@ const envSchema = z.object({
   CHAINPATROL_API_URL: z.string().url(),
   CHAINPATROL_API_KEY: z.string(),
   TEST_DISCORD_SERVER_ID: z.string().optional(),
-  DISCORD_DEPLOY_GLOBAL: z.boolean().optional().default(false),
+  DISCORD_DEPLOY_GLOBAL: z.coerce.boolean().optional().default(false),
 });
 
 const result = envSchema.safeParse(process.env);

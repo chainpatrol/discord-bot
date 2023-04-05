@@ -43,6 +43,7 @@ const deployCommands = async () => {
     const data = (await rest.put(
       Routes.applicationGuildCommands(clientId, guildId),
       { body: commands }
+      // { body: [] }
     )) as any[];
 
     console.log(

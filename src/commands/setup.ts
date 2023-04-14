@@ -114,7 +114,7 @@ async function connect(interaction: CommandInteraction) {
     await interaction.reply({
       ephemeral: true,
       content:
-        "The bot is already connected to an organization on ChainPatrol. Run `/setup disconnect` to disconnect the bot from your organization if you're an owner",
+        "The bot is already connected to an organization on ChainPatrol. Run `/setup disconnect` to disconnect the bot from your organization if you're an admin",
     });
     return;
   }

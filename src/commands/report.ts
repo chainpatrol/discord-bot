@@ -41,12 +41,16 @@ export async function execute(interaction: CommandInteraction) {
       }
     );
 
-    await interaction.reply(
-      `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.data.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`
-    );
+    await interaction.reply({
+      content: `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.data.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
+      ephemeral: true,
+    });
   } catch (error) {
     // Handle errors
     console.error("error", error);
-    await interaction.reply("Error with submitting report");
+    await interaction.reply({
+      content: "Error with submitting report",
+      ephemeral: true,
+    });
   }
 }

@@ -29,23 +29,32 @@ export async function execute(interaction: CommandInteraction) {
     );
 
     if (response.data.status === "BLOCKED") {
-      await interaction.reply(
-        `🚨 **Alert** 🚨 \n\nThis link is a scam! \`${escapedUrl}\` \n\n_Please **DO NOT** click on this link._`
-      );
+      await interaction.reply({
+        content: `🚨 **Alert** 🚨 \n\nThis link is a scam! \`${escapedUrl}\` \n\n_Please **DO NOT** click on this link._`,
+        ephemeral: true,
+      });
     } else if (response.data.status === "ALLOWED") {
-      await interaction.reply(`✅ This link looks safe! \`${escapedUrl}\``);
+      await interaction.reply({
+        content: `✅ This link looks safe! \`${escapedUrl}\``,
+        ephemeral: true,
+      });
     } else if (response.data.status === "UNKNOWN") {
-      await interaction.reply(
-        `⚠️ **Warning** ⚠️ \n\nThis link is not currently in our database: \`${escapedUrl}\` \n\n_Please be careful and **DO NOT** click on this link unless you are sure it's safe._`
-      );
+      await interaction.reply({
+        content: `⚠️ **Warning** ⚠️ \n\nThis link is not currently in our database: \`${escapedUrl}\` \n\n_Please be careful and **DO NOT** click on this link unless you are sure it's safe._`,
+        ephemeral: true,
+      });
     } else {
-      await interaction.reply(
-        `❓ We're not sure about this link. \`${escapedUrl}\``
-      );
+      await interaction.reply({
+        content: `❓ We're not sure about this link. \`${escapedUrl}\``,
+        ephemeral: true,
+      });
     }
   } catch (error) {
     // Handle errors
     console.error("error", error);
-    await interaction.reply("Error with checking link");
+    await interaction.reply({
+      content: "Error with checking link",
+      ephemeral: true,
+    });
   }
 }

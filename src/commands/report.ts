@@ -7,6 +7,9 @@ import {
   TextInputBuilder,
   TextInputStyle,
   ModalActionRowComponentBuilder,
+  User,
+  CacheType,
+  CommandInteractionOptionResolver,
 } from "discord.js";
 import { env } from "../env";
 
@@ -62,7 +65,7 @@ export async function execute(interaction: CommandInteraction) {
             type: "URL",
           },
         ],
-        attachmentUrls: screenshots.split(/\r?\n/),
+        attachmentUrls: screenshots ? screenshots.split(/\r?\n/) : [],
       }
     );
 
@@ -80,7 +83,13 @@ export async function execute(interaction: CommandInteraction) {
   }
 }
 
-function generateModal(user: any, options: any) {
+function generateModal(
+  user: User,
+  options: Omit<
+    CommandInteractionOptionResolver<CacheType>,
+    "getMessage" | "getFocused"
+  >
+) {
   const url = options.getString("url", true);
 
   const modal = new ModalBuilder()

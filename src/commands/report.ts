@@ -33,45 +33,43 @@ export async function execute(interaction: CommandInteraction) {
     await interaction.showModal(modal);
 
     // extract data from modal
-    interaction
-      .awaitModalSubmit({ time: 60000 })
-      .then(async (modalInteraction) => {
-        const url = modalInteraction.fields.getTextInputValue("urlInput");
-        const escapedUrl = url.replace(".", "(dot)");
+    const submissionResult = await interaction.awaitModalSubmit({
+      time: 60000,
+    });
 
-        const title = modalInteraction.fields.getTextInputValue("titleInput");
-        const description =
-          modalInteraction.fields.getTextInputValue("descriptionInput");
-        const screenshots =
-          modalInteraction.fields.getTextInputValue("screenshotInput");
-        const contact =
-          modalInteraction.fields.getTextInputValue("contactInput");
+    const url = submissionResult.fields.getTextInputValue("urlInput");
+    const escapedUrl = url.replace(".", "(dot)");
 
-        // submit report
-        const response = await axios.post(
-          `${env.CHAINPATROL_API_URL}/api/v2/report/create`,
+    const title = submissionResult.fields.getTextInputValue("titleInput");
+    const description =
+      submissionResult.fields.getTextInputValue("descriptionInput");
+    const screenshots =
+      submissionResult.fields.getTextInputValue("screenshotInput");
+    const contact = submissionResult.fields.getTextInputValue("contactInput");
+
+    // submit report
+    const response = await axios.post(
+      `${env.CHAINPATROL_API_URL}/api/v2/report/create`,
+      {
+        discordGuildId: guildId,
+        title: title,
+        description: description,
+        contactInfo: contact,
+        assets: [
           {
-            discordGuildId: guildId,
-            title: title,
-            description: description,
-            contactInfo: contact,
-            assets: [
-              {
-                content: url,
-                status: "BLOCKED",
-                type: "URL",
-              },
-            ],
-            attachmentUrls: screenshots.split(/\r?\n/),
-          }
-        );
+            content: url,
+            status: "BLOCKED",
+            type: "URL",
+          },
+        ],
+        attachmentUrls: screenshots.split(/\r?\n/),
+      }
+    );
 
-        await modalInteraction.reply({
-          content: `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.data.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
-          ephemeral: true,
-        });
-      })
-      .catch((err) => console.log("Report modal timeout"));
+    await submissionResult.reply({
+      content: `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.data.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
+      ephemeral: true,
+    });
   } catch (error) {
     // Handle errors
     console.error("error", error);
@@ -94,7 +92,6 @@ function generateModal(user: any, options: any) {
     // The label is the prompt the user sees for this input
     .setLabel("Scam link to be reported")
     // Short means only a single line of text
-    .setRequired(true)
     .setStyle(TextInputStyle.Short)
     .setValue(url)
     .setPlaceholder(url);
@@ -108,7 +105,6 @@ function generateModal(user: any, options: any) {
   const titleInput = new TextInputBuilder()
     .setCustomId("titleInput")
     .setLabel("Title")
-    .setRequired(true)
     .setStyle(TextInputStyle.Short)
     .setPlaceholder(`Discord Report: ${url}`)
     .setValue(`Discord Report: ${url}`);
@@ -120,7 +116,7 @@ function generateModal(user: any, options: any) {
   const descriptionInput = new TextInputBuilder()
     .setCustomId("descriptionInput")
     .setLabel("Description")
-    .setRequired(true)
+    .setRequired(false)
     .setStyle(TextInputStyle.Paragraph)
     .setPlaceholder(`Please explain why you think this is a scam`)
     .setValue(
@@ -134,7 +130,7 @@ function generateModal(user: any, options: any) {
   const screenshotsInput = new TextInputBuilder()
     .setCustomId("screenshotInput")
     .setLabel("Screenshot URLs (One URL per line)")
-    .setRequired(true)
+    .setRequired(false)
     .setStyle(TextInputStyle.Paragraph)
     .setPlaceholder(`Please paste any screenshots URL related to the scam`);
   const screenshotsActionRow =
@@ -145,7 +141,7 @@ function generateModal(user: any, options: any) {
   const contactInput = new TextInputBuilder()
     .setCustomId("contactInput")
     .setLabel("Let us know how to best contact you")
-    .setRequired(true)
+    .setRequired(false)
     .setStyle(TextInputStyle.Paragraph)
     .setPlaceholder(`Please provide your Discord username and ID`)
     .setValue(`discord user ${user.username} , Discord ID: ${user.id}`);

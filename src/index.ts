@@ -4,7 +4,7 @@ import { CustomClient } from "./client";
 import * as Sentry from "@sentry/node";
 
 Sentry.init({
-  dsn: env.DISCORD_BOT_SECRET,
+  dsn: env.SENTRY_SECRET,
 
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for performance monitoring.

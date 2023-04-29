@@ -14,8 +14,8 @@ const envSchema = z.object({
 const result = envSchema.safeParse(process.env);
 
 if (!result.success) {
-  console.error("Error parsing environment variables", result.error);
-  process.exit(1);
+  console.error(result.error);
+  throw new Error("Error parsing environment variables");
 }
 
 export const env = result.data;

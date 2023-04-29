@@ -1,6 +1,7 @@
 import axios from "axios";
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
 import { env } from "../env";
+import { errorHandler } from "../utils";
 
 export const data = new SlashCommandBuilder()
   .setName("check")
@@ -51,7 +52,7 @@ export async function execute(interaction: CommandInteraction) {
     }
   } catch (error) {
     // Handle errors
-    console.error("error", error);
+    errorHandler(error as Error);
     await interaction.reply({
       content: "Error with checking link",
       ephemeral: true,

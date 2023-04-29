@@ -9,6 +9,7 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { env } from "../env";
+import { errorHandler } from "../utils";
 
 export const data = new SlashCommandBuilder()
   .setName("setup")
@@ -82,7 +83,7 @@ export async function execute(interaction: CommandInteraction) {
     }
   } catch (error) {
     // Handle errors
-    console.error("error", error);
+    errorHandler(error as Error);
     await interaction.reply({
       ephemeral: true,
       content: "Error running setup command",
@@ -211,7 +212,7 @@ async function getDiscordGuildStatus(guildId: string): Promise<{
     );
     return data;
   } catch (e) {
-    console.error("error", e);
+    errorHandler(e as Error);
     return null;
   }
 }
@@ -266,7 +267,7 @@ async function status(interaction: CommandInteraction) {
       content: `✅ The bot is connected to [${organizationName}](${organizationUrl}) on ChainPatrol and is posting alerts to <#${channelId}>`,
     });
   } catch (e) {
-    console.error("error", e);
+    errorHandler(e as Error);
     await interaction.reply({
       ephemeral: true,
       content: "Error checking bot status",
@@ -327,7 +328,7 @@ async function feed(interaction: CommandInteraction) {
       ],
     });
   } catch (e) {
-    console.error("error", e);
+    errorHandler(e as Error);
     await interaction.reply({
       ephemeral: true,
       content: "Error setting up feed",

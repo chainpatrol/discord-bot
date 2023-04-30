@@ -46,8 +46,6 @@ export async function execute(interaction: CommandInteraction) {
     const title = submissionResult.fields.getTextInputValue("titleInput");
     const description =
       submissionResult.fields.getTextInputValue("descriptionInput");
-    const screenshots =
-      submissionResult.fields.getTextInputValue("screenshotInput");
     const contact = submissionResult.fields.getTextInputValue("contactInput");
 
     // submit report
@@ -65,7 +63,7 @@ export async function execute(interaction: CommandInteraction) {
             type: "URL",
           },
         ],
-        attachmentUrls: screenshots ? screenshots.split(/\r?\n/) : [],
+        attachmentUrls: [],
       }
     );
 
@@ -90,6 +88,7 @@ function generateModal(
     "getMessage" | "getFocused"
   >
 ) {
+  const usernameWithDiscriminator = `${user.username}#${user.discriminator}`;
   const url = options.getString("url", true);
 
   const modal = new ModalBuilder()
@@ -129,22 +128,11 @@ function generateModal(
     .setStyle(TextInputStyle.Paragraph)
     .setPlaceholder(`Please explain why you think this is a scam`)
     .setValue(
-      `reported by discord user ${user.username} , Discord ID: ${user.id}`
+      `reported by discord user ${usernameWithDiscriminator} , Discord ID: ${user.id}`
     );
   const descripionActionRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
       descriptionInput
-    );
-
-  const screenshotsInput = new TextInputBuilder()
-    .setCustomId("screenshotInput")
-    .setLabel("Screenshot URLs (One URL per line)")
-    .setRequired(false)
-    .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder(`Please paste any screenshots URL related to the scam`);
-  const screenshotsActionRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      screenshotsInput
     );
 
   const contactInput = new TextInputBuilder()
@@ -153,7 +141,9 @@ function generateModal(
     .setRequired(false)
     .setStyle(TextInputStyle.Paragraph)
     .setPlaceholder(`Please provide your Discord username and ID`)
-    .setValue(`discord user ${user.username} , Discord ID: ${user.id}`);
+    .setValue(
+      `discord user ${usernameWithDiscriminator} , Discord ID: ${user.id}`
+    );
   const contactActionRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
       contactInput
@@ -164,7 +154,6 @@ function generateModal(
     urlActionRow,
     titleActionRow,
     descripionActionRow,
-    screenshotsActionRow,
     contactActionRow
   );
 

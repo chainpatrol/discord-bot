@@ -1,6 +1,5 @@
 import { Events } from "discord.js";
 import { CustomClient } from "src/client";
-import { errorHandler } from "../utils";
 
 export default (client: CustomClient) => {
   console.log("InteractionCreate listener loaded.");
@@ -24,7 +23,7 @@ export default (client: CustomClient) => {
     try {
       await command.execute(interaction);
     } catch (error) {
-      errorHandler(error as Error);
+      console.error("error", error);
       await interaction.reply({
         content: "There was an error while executing this command!",
         ephemeral: true,

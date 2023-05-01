@@ -1,7 +1,6 @@
 import axios from "axios";
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
 import { env } from "../env";
-import { errorHandler } from "../utils";
 
 export const data = new SlashCommandBuilder()
   .setName("report")
@@ -48,7 +47,7 @@ export async function execute(interaction: CommandInteraction) {
     });
   } catch (error) {
     // Handle errors
-    errorHandler(error as Error);
+    console.error("error", error);
     await interaction.reply({
       content: "Error with submitting report",
       ephemeral: true,

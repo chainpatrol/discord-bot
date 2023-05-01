@@ -2,7 +2,6 @@ import { REST, Routes } from "discord.js";
 import fs from "node:fs";
 import path from "node:path";
 import { env } from "./env";
-import { errorHandler } from "./utils";
 
 const clientId = env["DISCORD_APPLICATION_ID"];
 const guildId = env["TEST_DISCORD_SERVER_ID"];
@@ -60,6 +59,6 @@ const deployCommands = async () => {
 deployCommands()
   .then(() => console.log("Done!"))
   .catch((error) => {
-    errorHandler(error as Error);
+    console.error("error", error);
     process.exit(1);
   });

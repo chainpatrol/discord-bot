@@ -4,7 +4,11 @@ import { CustomClient } from "./client";
 
 // Create a new client instance
 const client = new CustomClient({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
 });
 
 // Load commands and listeners

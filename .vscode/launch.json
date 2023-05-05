@@ -6,7 +6,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "doppler",
-      "runtimeArgs": ["run", "--", "yarn", "start"],
+      "runtimeArgs": ["run", "--", "yarn", "dev"],
       "internalConsoleOptions": "openOnSessionStart"
     }
   ]

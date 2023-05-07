@@ -1,4 +1,3 @@
-import axios from "axios";
 import {
   ActionRowBuilder,
   CommandInteraction,
@@ -11,7 +10,11 @@ import {
   CacheType,
   CommandInteractionOptionResolver,
 } from "discord.js";
-import { env } from "../env";
+import {
+  ChainPatrolApiClient,
+  AssetType,
+  AssetStatus,
+} from "../utils/ChainPatrolApiClient";
 
 export const data = new SlashCommandBuilder()
   .setName("report")
@@ -48,27 +51,23 @@ export async function execute(interaction: CommandInteraction) {
       submissionResult.fields.getTextInputValue("descriptionInput");
     const contact = submissionResult.fields.getTextInputValue("contactInput");
 
-    // submit report
-    const response = await axios.post(
-      `${env.CHAINPATROL_API_URL}/api/v2/report/create`,
-      {
-        discordGuildId: guildId,
-        title: title,
-        description: description,
-        contactInfo: contact,
-        assets: [
-          {
-            content: url,
-            status: "BLOCKED",
-            type: "URL",
-          },
-        ],
-        attachmentUrls: [],
-      }
-    );
+    const response = await ChainPatrolApiClient.createReport({
+      discordGuildId: guildId ?? undefined,
+      title: title,
+      description: description,
+      contactInfo: contact,
+      assets: [
+        {
+          content: url,
+          status: AssetStatus.BLOCKED,
+          type: AssetType.URL,
+        },
+      ],
+      attachmentUrls: [],
+    });
 
     await submissionResult.reply({
-      content: `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.data.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
+      content: `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
       ephemeral: true,
     });
   } catch (error) {

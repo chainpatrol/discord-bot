@@ -22,9 +22,7 @@ export default (client: CustomClient) => {
             content: url,
           }
         );
-        if (
-          response.data.status === "BLOCKED"
-        ) {
+        if (response.data.status === "BLOCKED") {
           await interaction.react("🚨");
           return;
         }

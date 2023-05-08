@@ -3,6 +3,8 @@ import { Events } from "discord.js";
 import { CustomClient } from "src/client";
 import { env } from "../env";
 
+export const URL_REGEX = /https?:\/\/(?:www\.)?([^\s]+\.[^\s]+)/gi;
+
 export default (client: CustomClient) => {
   console.log("BigBrother listener loaded.");
 
@@ -21,10 +23,9 @@ export default (client: CustomClient) => {
           }
         );
         if (
-          response.data.status === "BLOCKED" ||
-          response.data.status === "UNKNOWN"
+          response.data.status === "BLOCKED"
         ) {
-          interaction.react("🚨");
+          await interaction.react("🚨");
           return;
         }
       }
@@ -33,7 +34,5 @@ export default (client: CustomClient) => {
 };
 
 function isUrl(str: string) {
-  const regex = /((?:https?|ftp):\/\/)?(?:www\.)?([^\s]+\.[^\s]+)/gi;
-
-  return str.match(regex);
+  return str.match(URL_REGEX);
 }

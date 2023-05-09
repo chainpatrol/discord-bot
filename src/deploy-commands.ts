@@ -1,7 +1,6 @@
 import { REST, Routes } from "discord.js";
-import fs from "node:fs";
-import path from "node:path";
 import { env } from "./env";
+import { readDirectory } from "./utils/file.utils";
 
 const clientId = env["DISCORD_APPLICATION_ID"];
 const guildId = env["TEST_DISCORD_SERVER_ID"];
@@ -10,13 +9,10 @@ const deployGlobally = env["DISCORD_DEPLOY_GLOBAL"];
 
 const commands: any[] = [];
 // Grab all the command files from the commands directory you created earlier
-const commandsPath = path.resolve(__dirname, "..", "src", "commands");
-const commandFiles = fs
-  .readdirSync(commandsPath)
-  .filter((file) => file.endsWith(".ts"));
+const { filteredFiles } = readDirectory(".ts", "..", "src", "commands");
 
 // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
-for (const file of commandFiles) {
+for (const file of filteredFiles) {
   const command = require(`./commands/${file}`);
   commands.push(command.data.toJSON());
 }

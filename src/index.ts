@@ -17,6 +17,20 @@ const client = new CustomClient({
   intents: [GatewayIntentBits.Guilds],
 });
 
+process.on(
+  "unhandledRejection",
+  (reason: {} | null | undefined, promise: Promise<any>) => {
+    console.error("Unhandled Rejection at:", promise, "reason:", reason);
+    Sentry.captureException(reason);
+  }
+);
+
+process.on("uncaughtException", (err, origin) => {
+  console.error("Fatal error at:", origin, "reason:", err);
+  Sentry.captureException(err);
+  process.exit(1); // We don't want to continue the process if this error occurs
+});
+
 // Load commands and listeners
 client.loadCommands();
 client.loadListeners();

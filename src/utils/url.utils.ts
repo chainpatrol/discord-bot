@@ -1,3 +1,3 @@
 export function defangUrl(url: string) {
-    return url.replace(".", "(dot)");
-} 
+  return url.replace(".", "(dot)");
+}

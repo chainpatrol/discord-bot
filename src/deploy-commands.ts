@@ -9,11 +9,11 @@ const deployGlobally = env["DISCORD_DEPLOY_GLOBAL"];
 
 const commands: any[] = [];
 // Grab all the command files from the commands directory you created earlier
-const { filteredFiles } = readDirectory(".ts", "..", "src", "commands");
+const { filteredFiles } = readDirectory("./src/commands");
 
 // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
-for (const file of filteredFiles) {
-  const command = require(`./commands/${file}`);
+for (const filePath of filteredFiles) {
+  const command = require(filePath);
   commands.push(command.data.toJSON());
 }
 

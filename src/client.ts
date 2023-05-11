@@ -14,10 +14,9 @@ export class CustomClient extends Client {
    * Load commands from the commands folder
    */
   public loadCommands() {
-    const { readPath, filteredFiles } = readDirectory("commands");
+    const { filteredFiles } = readDirectory("./src/commands");
 
-    for (const file of filteredFiles) {
-      const filePath = path.join(readPath, file);
+    for (const filePath of filteredFiles) {
       const command = require(filePath);
 
       // Set a new item in the Collection with the key as the command name and the value as the exported module
@@ -35,10 +34,9 @@ export class CustomClient extends Client {
    * Load listeners from the listeners folder
    */
   public loadListeners() {
-    const { readPath, filteredFiles } = readDirectory("listeners");
+    const { filteredFiles } = readDirectory("./src/listeners");
 
-    for (const file of filteredFiles) {
-      const filePath = path.join(readPath, file);
+    for (const filePath of filteredFiles) {
       const listener = require(filePath);
 
       if (listener.default && typeof listener.default === "function") {

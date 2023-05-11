@@ -1,6 +1,7 @@
 import axios from "axios";
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
 import { env } from "../env";
+import { defangUrl } from "../utils/url";
 
 export const data = new SlashCommandBuilder()
   .setName("check")
@@ -17,11 +18,9 @@ export async function execute(interaction: CommandInteraction) {
   try {
     const { options } = interaction;
     const url = options.getString("url", true);
-
     const replyMessage = await checkAsset(url);
 
     await interaction.reply(replyMessage);
-
   } catch (error) {
     // Handle errors
     console.error("error", error);
@@ -33,7 +32,7 @@ export async function execute(interaction: CommandInteraction) {
 }
 
 export async function checkAsset(url: string) {
-  const escapedUrl = url.replace(".", "(dot)");
+  const escapedUrl = defangUrl(url);
 
   // check url
   const response = await axios.post(

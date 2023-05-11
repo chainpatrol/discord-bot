@@ -1,6 +1,6 @@
-import fs from "node:fs";
 import path from "node:path";
 import { Client, ClientOptions, Collection } from "discord.js";
+import { readDirectory } from "./utils/file";
 
 export class CustomClient extends Client {
   commands: Collection<string, { data: any; execute: any }>;
@@ -14,14 +14,9 @@ export class CustomClient extends Client {
    * Load commands from the commands folder
    */
   public loadCommands() {
-    const commandsPath = path.join(__dirname, "commands");
+    const { filteredFiles } = readDirectory("./src/commands");
 
-    const commandFiles = fs
-      .readdirSync(commandsPath)
-      .filter((file) => file.endsWith(".ts"));
-
-    for (const file of commandFiles) {
-      const filePath = path.join(commandsPath, file);
+    for (const filePath of filteredFiles) {
       const command = require(filePath);
 
       // Set a new item in the Collection with the key as the command name and the value as the exported module
@@ -39,14 +34,9 @@ export class CustomClient extends Client {
    * Load listeners from the listeners folder
    */
   public loadListeners() {
-    const listenersPath = path.join(__dirname, "listeners");
+    const { filteredFiles } = readDirectory("./src/listeners");
 
-    const listenerFiles = fs
-      .readdirSync(listenersPath)
-      .filter((file) => file.endsWith(".ts"));
-
-    for (const file of listenerFiles) {
-      const filePath = path.join(listenersPath, file);
+    for (const filePath of filteredFiles) {
       const listener = require(filePath);
 
       if (listener.default && typeof listener.default === "function") {

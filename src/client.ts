@@ -1,6 +1,6 @@
 import path from "node:path";
 import { Client, ClientOptions, Collection } from "discord.js";
-import { readDirectory } from "./utils/file.utils";
+import { readDirectory } from "./utils/file";
 
 export class CustomClient extends Client {
   commands: Collection<string, { data: any; execute: any }>;

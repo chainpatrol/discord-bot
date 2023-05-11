@@ -1,7 +1,7 @@
 import axios from "axios";
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
 import { env } from "../env";
-import { defangUrl } from "../utils/url.utils";
+import { defangUrl } from "../utils/url";
 
 export const data = new SlashCommandBuilder()
   .setName("check")

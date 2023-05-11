@@ -1,6 +1,6 @@
 import { REST, Routes } from "discord.js";
 import { env } from "./env";
-import { readDirectory } from "./utils/file.utils";
+import { readDirectory } from "./utils/file";
 
 const clientId = env["DISCORD_APPLICATION_ID"];
 const guildId = env["TEST_DISCORD_SERVER_ID"];

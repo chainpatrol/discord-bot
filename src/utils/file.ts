@@ -17,5 +17,9 @@ export function readDirectory(
 
   let filteredFiles = globSync(globPath + fileExtension);
 
+  if (filteredFiles.length == 0) {
+    console.warn(`No files found in directory ${globPath}`);
+  }
+
   return { filteredFiles: filteredFiles.map((file) => path.resolve(file)) };
 }

@@ -3,11 +3,15 @@ import axios from "axios";
 
 jest.mock("axios");
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 test("should get ALLOWED for good sites", () => {
   const status = { status: "ALLOWED" };
   const resp = { data: status };
 
-  (axios.post as jest.Mock).mockResolvedValue(resp);
+  (axios.post as jest.Mock).mockResolvedValueOnce(resp);
 
   return checkAsset("google.com").then((data) =>
     expect(data.content).toEqual("✅ This link looks safe! `google(dot)com`")
@@ -18,7 +22,7 @@ test("should get BLOCKED for bad sites", () => {
   const status = { status: "BLOCKED" };
   const resp = { data: status };
 
-  (axios.post as jest.Mock).mockResolvedValue(resp);
+  (axios.post as jest.Mock).mockResolvedValueOnce(resp);
 
   return checkAsset("hack.com").then((data) =>
     expect(data.content).toEqual(

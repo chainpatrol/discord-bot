@@ -38,13 +38,15 @@ export type ReportCreateType = {
 };
 
 export type ReportCreateOrganizationResponseType = {
+  id: number;
+  slug: string;
   name: string;
 };
 
 export type ReportCreateResponseType = {
   createdAt: string;
   id: number;
-  organization: ReportCreateOrganizationResponseType;
+  organization: ReportCreateOrganizationResponseType | null;
 };
 
 export type ResourceCheckType = {

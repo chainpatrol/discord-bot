@@ -23,7 +23,7 @@ export default (client: CustomClient) => {
     try {
       await command.execute(interaction);
     } catch (error) {
-      console.error(error);
+      console.error("error", error);
       await interaction.reply({
         content: "There was an error while executing this command!",
         ephemeral: true,

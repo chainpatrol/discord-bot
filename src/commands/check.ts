@@ -53,6 +53,7 @@ export async function execute(interaction: CommandInteraction) {
   } catch (error) {
     // Handle errors
     console.error("error", error);
+
     await interaction.reply({
       content: "Error with checking link",
       ephemeral: true,

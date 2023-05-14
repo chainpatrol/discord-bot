@@ -46,7 +46,7 @@ export type ReportCreateOrganizationResponseType = {
 export type ReportCreateResponseType = {
   createdAt: string;
   id: number;
-  organization: ReportCreateOrganizationResponseType | null;
+  organization: ReportCreateOrganizationResponseType;
 };
 
 export type ResourceCheckType = {

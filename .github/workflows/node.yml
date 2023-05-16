@@ -26,6 +26,7 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
+    - run: rm -rf node_modules ./yarn.lock
     - run: yarn install
     - run: yarn tsc --strict true
     - run: yarn test

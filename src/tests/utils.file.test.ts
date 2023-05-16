@@ -1,5 +1,6 @@
 import { readDirectory } from "../utils/file";
 import * as glob from "glob";
+import * as path from "path";
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -15,9 +16,13 @@ test("should return correct file paths", () => {
 
   const { filteredFiles } = readDirectory("./test/location");
 
+  const commandPath = path.resolve(__dirname, "..", "commands");
+
+  expect(filteredFiles.length).toEqual(2);
+
   expect(filteredFiles).toEqual([
-    "/workspaces/discord-bot/src/commands/file1.ts",
-    "/workspaces/discord-bot/src/commands/file2.ts",
+    commandPath + "/file1.ts",
+    commandPath + "/file2.ts",
   ]);
 });
 

@@ -16,13 +16,13 @@ test("should return correct file paths", () => {
 
   const { filteredFiles } = readDirectory("./test/location");
 
-  const commandPath = path.resolve(__dirname, "..", "commands");
+  const commandPath = path.resolve(__dirname, "../..");
 
   expect(filteredFiles.length).toEqual(2);
 
   expect(filteredFiles).toEqual([
-    commandPath + "/file1.ts",
-    commandPath + "/file2.ts",
+    commandPath + "/src/commands/file1.ts",
+    commandPath + "/src/commands/file2.ts",
   ]);
 });
 

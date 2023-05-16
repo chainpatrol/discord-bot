@@ -9,13 +9,14 @@ const envSchema = z.object({
   CHAINPATROL_API_KEY: z.string(),
   TEST_DISCORD_SERVER_ID: z.string().optional(),
   DISCORD_DEPLOY_GLOBAL: z.coerce.boolean().optional().default(false),
+  SENTRY_SECRET: z.string(),
 });
 
 const result = envSchema.safeParse(process.env);
 
 if (!result.success) {
-  console.error("Error parsing environment variables", result.error);
-  process.exit(1);
+  console.error(result.error);
+  throw new Error("Error parsing environment variables");
 }
 
 export const env = result.data;

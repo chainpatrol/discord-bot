@@ -1,6 +1,5 @@
-import axios from "axios";
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import { env } from "../env";
+import { ChainPatrolApiClient, AssetType } from "../utils/ChainPatrolApiClient";
 import { defangUrl } from "../utils/url";
 
 export const data = new SlashCommandBuilder()
@@ -20,26 +19,22 @@ export async function execute(interaction: CommandInteraction) {
     const url = options.getString("url", true);
     const escapedUrl = defangUrl(url);
 
-    // check url
-    const response = await axios.post(
-      `${env.CHAINPATROL_API_URL}/api/v2/asset/check`,
-      {
-        type: "URL",
-        content: url,
-      }
-    );
+    const response = await ChainPatrolApiClient.checkAsset({
+      content: url,
+      type: AssetType.URL,
+    });
 
-    if (response.data.status === "BLOCKED") {
+    if (response.status === "BLOCKED") {
       await interaction.reply({
         content: `🚨 **Alert** 🚨 \n\nThis link is a scam! \`${escapedUrl}\` \n\n_Please **DO NOT** click on this link._`,
         ephemeral: true,
       });
-    } else if (response.data.status === "ALLOWED") {
+    } else if (response.status === "ALLOWED") {
       await interaction.reply({
         content: `✅ This link looks safe! \`${escapedUrl}\``,
         ephemeral: true,
       });
-    } else if (response.data.status === "UNKNOWN") {
+    } else if (response.status === "UNKNOWN") {
       await interaction.reply({
         content: `⚠️ **Warning** ⚠️ \n\nThis link is not currently in our database: \`${escapedUrl}\` \n\n_Please be careful and **DO NOT** click on this link unless you are sure it's safe._`,
         ephemeral: true,

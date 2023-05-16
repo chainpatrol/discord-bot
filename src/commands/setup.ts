@@ -1,4 +1,3 @@
-import axios from "axios";
 import {
   ButtonStyle,
   ChannelType,
@@ -9,6 +8,7 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { env } from "../env";
+import { ChainPatrolApiClient } from "../utils/ChainPatrolApiClient";
 
 export const data = new SlashCommandBuilder()
   .setName("setup")
@@ -98,7 +98,9 @@ async function connect(interaction: CommandInteraction) {
   }
 
   // Check if the bot is already connected to the server
-  const connectionStatus = await getDiscordGuildStatus(guildId);
+  const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
+    guildId,
+  });
 
   if (!connectionStatus) {
     await interaction.reply({
@@ -148,7 +150,9 @@ async function disconnect(interaction: CommandInteraction) {
   }
 
   // Check if the bot is connected to the server
-  const connectionStatus = await getDiscordGuildStatus(guildId);
+  const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
+    guildId,
+  });
 
   if (!connectionStatus) {
     await interaction.reply({
@@ -189,33 +193,6 @@ async function disconnect(interaction: CommandInteraction) {
   });
 }
 
-async function getDiscordGuildStatus(guildId: string): Promise<{
-  connected: boolean;
-  guildId?: string;
-  channelId?: string;
-  organizationName: string;
-  organizationUrl: string;
-} | null> {
-  try {
-    const { data } = await axios.post(
-      `${env.CHAINPATROL_API_URL}/api/v2/internal/getDiscordGuildStatus`,
-      {
-        guildId,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-KEY": env.CHAINPATROL_API_KEY,
-        },
-      }
-    );
-    return data;
-  } catch (e) {
-    console.error("error", e);
-    return null;
-  }
-}
-
 async function status(interaction: CommandInteraction) {
   const guildId = interaction.guildId;
 
@@ -225,7 +202,9 @@ async function status(interaction: CommandInteraction) {
 
   // Check if the bot is connected to the server
   try {
-    const connectionStatus = await getDiscordGuildStatus(guildId);
+    const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus(
+      { guildId }
+    );
 
     if (!connectionStatus) {
       await interaction.reply({
@@ -288,7 +267,9 @@ async function feed(interaction: CommandInteraction) {
   const channel = interaction.options.getChannel("channel", true);
 
   try {
-    const connectionStatus = await getDiscordGuildStatus(guildId);
+    const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus(
+      { guildId }
+    );
 
     if (!connectionStatus) {
       await interaction.reply({

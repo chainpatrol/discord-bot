@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "The official ChainPatrol Discord bot",
   "scripts": {
-    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec node -r ts-node/register src/index.ts",
     "start": "ts-node src/index.ts",
     "deploy-commands": "ts-node src/deploy-commands.ts"
   },

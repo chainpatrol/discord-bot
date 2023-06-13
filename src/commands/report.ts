@@ -33,7 +33,7 @@ export async function execute(interaction: CommandInteraction) {
 
   try {
     const { guildId, user, options } = interaction;
-    const modal = generateModal(user, options);
+    const modal = generateModal(user, options, guildId);
 
     // Show the modal to the user
     await interaction.showModal(modal);
@@ -85,7 +85,8 @@ function generateModal(
   options: Omit<
     CommandInteractionOptionResolver<CacheType>,
     "getMessage" | "getFocused"
-  >
+  >,
+  guildId: string | null
 ) {
   const usernameWithDiscriminator = `${user.username}#${user.discriminator}`;
   const url = options.getString("url", true);
@@ -127,7 +128,7 @@ function generateModal(
     .setStyle(TextInputStyle.Paragraph)
     .setPlaceholder(`Please explain why you think this is a scam`)
     .setValue(
-      `reported by discord user ${usernameWithDiscriminator} , Discord ID: ${user.id}`
+      `reported by discord user ${usernameWithDiscriminator}, Discord ID: ${user.id}, from Server: ${guildId}`
     );
   const descripionActionRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(

@@ -8,7 +8,7 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { env } from "../env";
-import { ChainPatrolApiClient } from "../utils/ChainPatrolApiClient";
+import { ChainPatrolApiClient } from "../utils/api";
 
 export const data = new SlashCommandBuilder()
   .setName("setup")

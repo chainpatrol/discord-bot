@@ -14,7 +14,7 @@
   },
   "files": [
     "src/index.ts",
-    "./src/env.ts",
+    "src/env.ts",
     "src/client.ts",
     "src/deploy-commands.ts"
   ],

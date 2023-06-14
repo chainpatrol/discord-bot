@@ -1,5 +1,5 @@
 import { Events } from "discord.js";
-import { CustomClient } from "src/client";
+import { CustomClient } from "~/client";
 
 export default (client: CustomClient) => {
   console.log("Ready listener loaded.");

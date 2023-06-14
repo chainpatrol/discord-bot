@@ -2,22 +2,19 @@
   "compilerOptions": {
     "target": "es2016",
     "module": "commonjs",
-    "rootDir": "./src/",
     "moduleResolution": "node",
-    "baseUrl": "./",
+    "rootDir": "./src/",
+    "baseUrl": "./src/",
     "outDir": "./dist/",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "~/*": ["./*"]
+    }
   },
-  "files": [
-    "src/index.ts",
-    "src/env.ts",
-    "src/client.ts",
-    "src/deploy-commands.ts"
-  ],
-  "include": ["./**/*.ts"],
+  "include": ["./src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

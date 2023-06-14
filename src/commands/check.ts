@@ -1,6 +1,6 @@
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import { ChainPatrolApiClient, AssetType } from "../utils/api";
-import { defangUrl } from "../utils/url";
+import { ChainPatrolApiClient, AssetType } from "~/utils/api";
+import { defangUrl } from "~/utils/url";
 
 export const data = new SlashCommandBuilder()
   .setName("check")

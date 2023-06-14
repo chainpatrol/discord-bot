@@ -1,9 +1,7 @@
-import axios from "axios";
 import { Events } from "discord.js";
-import { CustomClient } from "src/client";
-import { env } from "../env";
-import { extractUrls } from "src/utils/url";
-import { AssetType, ChainPatrolApiClient } from "src/utils/api";
+import { CustomClient } from "~/client";
+import { extractUrls } from "~/utils/url";
+import { AssetType, ChainPatrolApiClient } from "~/utils/api";
 
 export default (client: CustomClient) => {
   console.log("MessageCreate listener loaded.");

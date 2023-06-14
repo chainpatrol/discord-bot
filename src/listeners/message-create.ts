@@ -7,6 +7,10 @@ export default (client: CustomClient) => {
   console.log("MessageCreate listener loaded.");
 
   client.on(Events.MessageCreate, async (interaction) => {
+    if (interaction.author.bot) {
+      return;
+    }
+
     const content = interaction.content;
 
     const possibleUrls = extractUrls(content);

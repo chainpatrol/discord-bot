@@ -52,9 +52,9 @@ export const data = new SlashCommandBuilder()
       const contact = submissionResult.fields.getTextInputValue("contactInput");
   
       // Getting the Discord user information
-      const discordAvatarUrl = user.displayAvatarURL();  // avatar url
-      const discordPublicUsername = user.username; // public username
-      const discordFormattedUsername = `${user.username}#${user.discriminator}`; // true username in "user#1234" format
+      const discordAvatarUrl = user.displayAvatarURL();  
+      const discordPublicUsername = user.username; 
+      const discordFormattedUsername = `${user.username}#${user.discriminator}`; // username in "user#1234" format
   
       const response = await ChainPatrolApiClient.createReport({
         discordGuildId: guildId ?? undefined,

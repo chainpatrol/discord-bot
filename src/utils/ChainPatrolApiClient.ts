@@ -35,6 +35,9 @@ export type ReportCreateType = {
   discordGuildId?: string;
   organizationSlug?: string;
   title: string;
+  discordAvatarUrl: string; 
+  discordPublicUsername: string;
+  discordFormattedUsername: string;
 };
 
 export type ReportCreateOrganizationResponseType = {

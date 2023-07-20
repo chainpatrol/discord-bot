@@ -2,6 +2,7 @@ import { Events } from "discord.js";
 import { CustomClient } from "~/client";
 import { extractUrls } from "~/utils/url";
 import { AssetType, ChainPatrolApiClient } from "~/utils/api";
+import { Flags, isFlagEnabled } from "~/utils/flags";
 
 export default (client: CustomClient) => {
   console.log("MessageUpdate listener loaded.");
@@ -12,6 +13,26 @@ export default (client: CustomClient) => {
     }
 
     if (newInteraction.author?.bot) {
+      return;
+    }
+
+    const guildId = newInteraction.guildId;
+
+    if (!guildId) {
+      return;
+    }
+
+    const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus(
+      { guildId }
+    );
+
+    if (!connectionStatus || !connectionStatus.connected) {
+      return;
+    }
+
+    const slug = connectionStatus.organizationSlug;
+
+    if (!isFlagEnabled(slug, Flags.REACT_TO_SUSPICIOUS_MESSAGES)) {
       return;
     }
 

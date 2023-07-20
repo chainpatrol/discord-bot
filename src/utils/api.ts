@@ -11,6 +11,7 @@ export type DiscordGuildStatusResponseType = {
   channelId?: string;
   organizationName: string;
   organizationUrl: string;
+  organizationSlug: string;
 };
 
 export enum AssetType {

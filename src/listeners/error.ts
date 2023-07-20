@@ -1,6 +1,6 @@
 import { Events } from "discord.js";
-import { CustomClient } from "src/client";
 import * as Sentry from "@sentry/node";
+import { CustomClient } from "~/client";
 
 export default (client: CustomClient) => {
   console.log("Error catcher loaded.");

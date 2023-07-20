@@ -1,5 +1,5 @@
 import axios from "axios";
-import { env } from "../env";
+import { env } from "~/env";
 
 export type DiscordGuildStatusType = {
   guildId: string;
@@ -11,6 +11,7 @@ export type DiscordGuildStatusResponseType = {
   channelId?: string;
   organizationName: string;
   organizationUrl: string;
+  organizationSlug: string;
 };
 
 export enum AssetType {

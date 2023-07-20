@@ -1,7 +1,8 @@
-import { env } from "./env";
 import { GatewayIntentBits } from "discord.js";
-import { CustomClient } from "./client";
 import * as Sentry from "@sentry/node";
+
+import { CustomClient } from "~/client";
+import { env } from "~/env";
 
 Sentry.init({
   dsn: env.SENTRY_SECRET,
@@ -14,7 +15,11 @@ Sentry.init({
 
 // Create a new client instance
 const client = new CustomClient({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
 });
 
 process.on(

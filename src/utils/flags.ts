@@ -6,6 +6,9 @@ const orgFlags: Record<string, Record<Flags, boolean>> = {
   chainpatrol: {
     [Flags.REACT_TO_SUSPICIOUS_MESSAGES]: true,
   },
+  mountaintop: {
+    [Flags.REACT_TO_SUSPICIOUS_MESSAGES]: true,
+  },
 };
 
 export function isFlagEnabled(slug: string, flag: Flags): boolean {

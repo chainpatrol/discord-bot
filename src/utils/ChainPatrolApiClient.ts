@@ -28,7 +28,7 @@ export type ReportCreateAssetType = {
 };
 
 export type ReportCreateType = {
-  assets: ReportCreateAssetType[];
+  assets: ReportCreateAssetType[];  
   attachmentUrls: string[];
   contactInfo?: string;
   description: string;
@@ -38,6 +38,11 @@ export type ReportCreateType = {
   discordAvatarUrl: string; 
   discordPublicUsername: string;
   discordFormattedUsername: string;
+  externalReporterData: {
+    externalAvatarUrl: string,
+    externalUsername: string,
+    platform: string,
+  }
 };
 
 export type ReportCreateOrganizationResponseType = {

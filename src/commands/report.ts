@@ -55,7 +55,11 @@ export const data = new SlashCommandBuilder()
       const discordAvatarUrl = user.displayAvatarURL();  
       const discordPublicUsername = user.username; 
       const discordFormattedUsername = `${user.username}#${user.discriminator}`; // username in "user#1234" format
-  
+      const externalData = {
+        externalAvatarUrl: discordAvatarUrl,
+        externalUsername: discordFormattedUsername,
+        platform: 'discord'
+      }
       const response = await ChainPatrolApiClient.createReport({
         discordGuildId: guildId ?? undefined,
         title: title,
@@ -71,7 +75,8 @@ export const data = new SlashCommandBuilder()
         attachmentUrls: [],
         discordAvatarUrl: discordAvatarUrl,
         discordPublicUsername: discordPublicUsername,
-        discordFormattedUsername: discordFormattedUsername
+        discordFormattedUsername: discordFormattedUsername,
+        externalReporterData: externalData,
       });
   
       await submissionResult.reply({

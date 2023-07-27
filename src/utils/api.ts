@@ -1,3 +1,4 @@
+import { ChainPatrolClient } from "@chainpatrol/sdk";
 import axios from "axios";
 import { env } from "~/env";
 
@@ -89,6 +90,10 @@ export type AssetListAssetReponseType = {
 export type AssetListReponseType = {
   assets: AssetListAssetReponseType[];
 };
+
+export const chainPatrolClient = new ChainPatrolClient({
+  apiKey: env.CHAINPATROL_API_KEY,
+});
 
 enum ChainPatrolApiUri {
   ReportCreate = "api/v2/report/create",

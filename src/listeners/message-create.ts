@@ -5,7 +5,7 @@ import {
   AssetStatus,
   AssetType,
   ChainPatrolApiClient,
-  chainPatrolClient,
+  chainpatrol,
 } from "~/utils/api";
 import { Flags, isFlagEnabled } from "~/utils/flags";
 
@@ -46,7 +46,7 @@ export default (client: CustomClient) => {
     }
 
     for (const url of possibleUrls) {
-      const response = await chainPatrolClient.asset.check({
+      const response = await chainpatrol.asset.check({
         content: url,
         type: AssetType.URL,
       });

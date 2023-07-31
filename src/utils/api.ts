@@ -2,7 +2,7 @@ import { ChainPatrolClient } from "@chainpatrol/sdk";
 import axios from "axios";
 import { env } from "~/env";
 
-export const chainPatrolClient = new ChainPatrolClient({
+export const chainpatrol = new ChainPatrolClient({
   apiKey: env.CHAINPATROL_API_KEY,
   baseUrl: `${env.CHAINPATROL_API_URL}/api/`,
 });

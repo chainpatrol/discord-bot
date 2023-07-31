@@ -4,7 +4,7 @@ import { env } from "~/env";
 
 export const chainPatrolClient = new ChainPatrolClient({
   apiKey: env.CHAINPATROL_API_KEY,
-  baseUrl: env.CHAINPATROL_API_URL,
+  baseUrl: `${env.CHAINPATROL_API_URL}/api/`,
 });
 
 export type DiscordGuildStatusType = {

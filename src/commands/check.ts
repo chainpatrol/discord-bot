@@ -1,5 +1,5 @@
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import { ChainPatrolApiClient, AssetType } from "~/utils/api";
+import { AssetType, chainpatrol } from "~/utils/api";
 import { defangUrl } from "~/utils/url";
 
 export const data = new SlashCommandBuilder()
@@ -19,7 +19,7 @@ export async function execute(interaction: CommandInteraction) {
     const url = options.getString("url", true);
     const escapedUrl = defangUrl(url);
 
-    const response = await ChainPatrolApiClient.checkAsset({
+    const response = await chainpatrol.asset.check({
       content: url,
       type: AssetType.URL,
     });

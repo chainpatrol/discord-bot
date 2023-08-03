@@ -10,11 +10,7 @@ import {
   CacheType,
   CommandInteractionOptionResolver,
 } from "discord.js";
-import {
-  ChainPatrolApiClient,
-  AssetType,
-  AssetStatus,
-} from "../utils/ChainPatrolApiClient";
+import { ChainPatrolApiClient, AssetType, AssetStatus } from "~/utils/api";
 
 export const data = new SlashCommandBuilder()
   .setName("report")

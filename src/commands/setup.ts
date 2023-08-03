@@ -7,8 +7,8 @@ import {
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
-import { env } from "../env";
-import { ChainPatrolApiClient } from "../utils/ChainPatrolApiClient";
+import { env } from "~/env";
+import { ChainPatrolApiClient } from "~/utils/api";
 
 export const data = new SlashCommandBuilder()
   .setName("setup")

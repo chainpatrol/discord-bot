@@ -1,5 +1,11 @@
+import { ChainPatrolClient } from "@chainpatrol/sdk";
 import axios from "axios";
-import { env } from "../env";
+import { env } from "~/env";
+
+export const chainpatrol = new ChainPatrolClient({
+  apiKey: env.CHAINPATROL_API_KEY,
+  baseUrl: `${env.CHAINPATROL_API_URL}/api/`,
+});
 
 export type DiscordGuildStatusType = {
   guildId: string;
@@ -11,6 +17,7 @@ export type DiscordGuildStatusResponseType = {
   channelId?: string;
   organizationName: string;
   organizationUrl: string;
+  organizationSlug: string;
 };
 
 export enum AssetType {
@@ -57,50 +64,14 @@ export type ReportCreateResponseType = {
   organization: ReportCreateOrganizationResponseType;
 };
 
-export type ResourceCheckType = {
-  content: string;
-  detailed?: boolean;
-  type: AssetType;
-};
-
-export type ResourceCheckReportReponseType = {
-  createdAt: string;
-  id: number;
-};
-
 export enum AssetStatus {
   BLOCKED = "BLOCKED",
   ALLOWED = "ALLOWED",
   UNKNOWN = "UNKNOWN",
 }
 
-export type ResourceCheckResponseType = {
-  reason: string;
-  reports: ResourceCheckReportReponseType[];
-  status: AssetStatus;
-};
-
-export type AssetListType = {
-  endDate?: string;
-  startDate?: string;
-  status?: AssetStatus;
-  type: AssetType;
-};
-
-export type AssetListAssetReponseType = {
-  content: string;
-  status: AssetStatus;
-  type: AssetType;
-};
-
-export type AssetListReponseType = {
-  assets: AssetListAssetReponseType[];
-};
-
 enum ChainPatrolApiUri {
   ReportCreate = "api/v2/report/create",
-  AssetCheck = "api/v2/asset/check",
-  AssetList = "api/v2/asset/list",
   DiscordGuildStatus = "api/v2/internal/getDiscordGuildStatus",
 }
 
@@ -113,19 +84,14 @@ class ChainPatrolApiRoutes {
     return ChainPatrolApiRoutes.getURL(ChainPatrolApiUri.ReportCreate);
   }
 
-  public static assetCheckUrl() {
-    return ChainPatrolApiRoutes.getURL(ChainPatrolApiUri.AssetCheck);
-  }
-
-  public static assetListUrl() {
-    return ChainPatrolApiRoutes.getURL(ChainPatrolApiUri.AssetList);
-  }
-
   public static discordGuildStatusUrl() {
     return ChainPatrolApiRoutes.getURL(ChainPatrolApiUri.DiscordGuildStatus);
   }
 }
 
+/**
+ * @deprecated Use @chainpatrol/sdk instead
+ */
 export class ChainPatrolApiClient {
   private static async postSecure<T = any>(
     path: string,
@@ -191,24 +157,5 @@ export class ChainPatrolApiClient {
       );
 
     return reportResponse;
-  }
-
-  public static async checkAsset(asset: ResourceCheckType) {
-    const checkResponse =
-      await ChainPatrolApiClient.post<ResourceCheckResponseType>(
-        ChainPatrolApiRoutes.assetCheckUrl(),
-        asset
-      );
-
-    return checkResponse;
-  }
-
-  public static async listAssets(config: AssetListType) {
-    const listResponse = await ChainPatrolApiClient.post<AssetListReponseType>(
-      ChainPatrolApiRoutes.assetListUrl(),
-      config
-    );
-
-    return listResponse;
   }
 }

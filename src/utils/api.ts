@@ -45,9 +45,9 @@ export type ReportCreateType = {
   discordAvatarUrl: string; 
   discordPublicUsername: string;
   discordFormattedUsername: string;
-  externalReporterData: {
-    externalAvatarUrl: string,
-    externalUsername: string,
+  ExternalReporterData: {
+    avatarUrl: string,
+    platformIdentifier: string,
     platform: string,
   }
 };

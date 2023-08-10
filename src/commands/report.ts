@@ -69,9 +69,6 @@ export async function execute(interaction: CommandInteraction) {
         },
       ],
       attachmentUrls: [],
-      discordAvatarUrl: discordAvatarUrl,
-      discordPublicUsername: discordPublicUsername,
-      discordFormattedUsername: discordFormattedUsername,
       externalReporter: externalUser,
     });
 

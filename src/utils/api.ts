@@ -42,7 +42,7 @@ export type ReportCreateType = {
   discordGuildId?: string;
   organizationSlug?: string;
   title: string;
-  externalReporter: {
+  externalReporter?: {
     platform: string;
     platformIdentifier: string;
     avatarUrl?: string;

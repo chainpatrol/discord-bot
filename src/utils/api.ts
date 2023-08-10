@@ -35,21 +35,21 @@ export type ReportCreateAssetType = {
 };
 
 export type ReportCreateType = {
-  assets: ReportCreateAssetType[];  
+  assets: ReportCreateAssetType[];
   attachmentUrls: string[];
   contactInfo?: string;
   description: string;
   discordGuildId?: string;
   organizationSlug?: string;
   title: string;
-  discordAvatarUrl: string; 
+  discordAvatarUrl: string;
   discordPublicUsername: string;
   discordFormattedUsername: string;
-  ExternalReporterData: {
-    avatarUrl: string,
-    platformIdentifier: string,
-    platform: string,
-  }
+  externalReporter: {
+    platform: string;
+    platformIdentifier: string;
+    avatarUrl?: string;
+  };
 };
 
 export type ReportCreateOrganizationResponseType = {

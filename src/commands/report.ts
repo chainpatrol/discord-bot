@@ -47,6 +47,15 @@ export async function execute(interaction: CommandInteraction) {
       submissionResult.fields.getTextInputValue("descriptionInput");
     const contact = submissionResult.fields.getTextInputValue("contactInput");
 
+    // Getting the Discord user information
+    const discordAvatarUrl = user.displayAvatarURL();
+    const discordPublicUsername = user.username;
+    const discordFormattedUsername = `${user.username}#${user.discriminator}`; // username in "user#1234" format
+    const externalUser = {
+      platform: "discord",
+      platformIdentifier: discordFormattedUsername,
+      avatarUrl: discordAvatarUrl,
+    };
     const response = await ChainPatrolApiClient.createReport({
       discordGuildId: guildId ?? undefined,
       title: title,
@@ -60,6 +69,7 @@ export async function execute(interaction: CommandInteraction) {
         },
       ],
       attachmentUrls: [],
+      externalReporter: externalUser,
     });
 
     await submissionResult.reply({

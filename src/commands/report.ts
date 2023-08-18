@@ -10,7 +10,7 @@ import {
   CacheType,
   CommandInteractionOptionResolver,
 } from "discord.js";
-import { ChainPatrolApiClient, AssetType, AssetStatus } from "~/utils/api";
+import { chainpatrol } from "~/utils/api";
 
 export const data = new SlashCommandBuilder()
   .setName("report")
@@ -27,63 +27,72 @@ export async function execute(interaction: CommandInteraction) {
     return;
   }
 
-  try {
-    const { guildId, user, options } = interaction;
-    const modal = generateModal(user, options, guildId);
+  const { guildId, user, options } = interaction;
 
-    // Show the modal to the user
-    await interaction.showModal(modal);
+  const urlInput = options.getString("url", true);
 
-    // extract data from modal
-    const submissionResult = await interaction.awaitModalSubmit({
-      time: 60000,
-    });
+  const assetCheckResponse = await chainpatrol.asset.check({
+    type: "URL",
+    content: urlInput,
+  });
 
-    const url = submissionResult.fields.getTextInputValue("urlInput");
-    const escapedUrl = url.replace(".", "(dot)");
-
-    const title = submissionResult.fields.getTextInputValue("titleInput");
-    const description =
-      submissionResult.fields.getTextInputValue("descriptionInput");
-    const contact = submissionResult.fields.getTextInputValue("contactInput");
-
-    // Getting the Discord user information
-    const discordAvatarUrl = user.displayAvatarURL();
-    const discordPublicUsername = user.username;
-    const discordFormattedUsername = `${user.username}#${user.discriminator}`; // username in "user#1234" format
-    const externalUser = {
-      platform: "discord",
-      platformIdentifier: discordFormattedUsername,
-      avatarUrl: discordAvatarUrl,
-    };
-    const response = await ChainPatrolApiClient.createReport({
-      discordGuildId: guildId ?? undefined,
-      title: title,
-      description: description,
-      contactInfo: contact,
-      assets: [
-        {
-          content: url,
-          status: AssetStatus.BLOCKED,
-          type: AssetType.URL,
-        },
-      ],
-      attachmentUrls: [],
-      externalReporter: externalUser,
-    });
-
-    await submissionResult.reply({
-      content: `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
-      ephemeral: true,
-    });
-  } catch (error) {
-    // Handle errors
-    console.error("error", error);
+  if (assetCheckResponse.status === "BLOCKED") {
     await interaction.reply({
-      content: "Error with submitting report",
+      content: `⚠️ **This link is already Blocked by ChainPatrol.** No need to report it again.`,
       ephemeral: true,
     });
+    return;
   }
+
+  if (assetCheckResponse.status === "ALLOWED") {
+    await interaction.reply({
+      content: `⚠️ **This link is on ChainPatrol's Allowlist.** \n\nIf you think this is a mistake, please file a [dispute](https://app.chainpatrol.io/dispute).`,
+      ephemeral: true,
+    });
+    return;
+  }
+
+  const modal = generateModal(user, options, guildId);
+
+  // Show the modal to the user
+  await interaction.showModal(modal);
+
+  // extract data from modal
+  const submissionResult = await interaction.awaitModalSubmit({
+    time: 60000,
+  });
+
+  const url = submissionResult.fields.getTextInputValue("urlInput");
+  const escapedUrl = url.replace(".", "(dot)");
+
+  const title = submissionResult.fields.getTextInputValue("titleInput");
+  const description =
+    submissionResult.fields.getTextInputValue("descriptionInput");
+  const contactInfo = submissionResult.fields.getTextInputValue("contactInput");
+
+  // Getting the Discord user information
+  const discordAvatarUrl = user.displayAvatarURL();
+  const discordPublicUsername = user.username;
+  const discordFormattedUsername = `${user.username}#${user.discriminator}`; // username in "user#1234" format
+  const externalUser = {
+    platform: "discord",
+    platformIdentifier: discordFormattedUsername,
+    avatarUrl: discordAvatarUrl,
+  };
+
+  const response = await chainpatrol.report.create({
+    discordGuildId: guildId ?? undefined,
+    externalReporter: externalUser,
+    title,
+    description,
+    contactInfo,
+    assets: [{ content: url, status: "BLOCKED" }],
+  });
+
+  await submissionResult.reply({
+    content: `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
+    ephemeral: true,
+  });
 }
 
 function generateModal(

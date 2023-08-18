@@ -1,6 +1,7 @@
-import { ChainPatrolClient } from "@chainpatrol/sdk";
-import axios from "axios";
+import { ChainPatrolClient, AssetStatus, AssetType } from "@chainpatrol/sdk";
 import { env } from "~/env";
+
+export type { AssetStatus, AssetType };
 
 export const chainpatrol = new ChainPatrolClient({
   apiKey: env.CHAINPATROL_API_KEY,
@@ -20,65 +21,13 @@ export type DiscordGuildStatusResponseType = {
   organizationSlug: string;
 };
 
-export enum AssetType {
-  URL = "URL",
-  PAGE = "PAGE",
-  ADDRESS = "ADDRESS",
-  DISCORD = "DISCORD",
-  TWITTER = "TWITTER",
-}
-
-export type ReportCreateAssetType = {
-  content: string;
-  status: AssetStatus;
-  type?: AssetType;
-};
-
-export type ReportCreateType = {
-  assets: ReportCreateAssetType[];
-  attachmentUrls: string[];
-  contactInfo?: string;
-  description: string;
-  discordGuildId?: string;
-  organizationSlug?: string;
-  title: string;
-  externalReporter?: {
-    platform: string;
-    platformIdentifier: string;
-    avatarUrl?: string;
-  };
-};
-
-export type ReportCreateOrganizationResponseType = {
-  id: number;
-  slug: string;
-  name: string;
-};
-
-export type ReportCreateResponseType = {
-  createdAt: string;
-  id: number;
-  organization: ReportCreateOrganizationResponseType;
-};
-
-export enum AssetStatus {
-  BLOCKED = "BLOCKED",
-  ALLOWED = "ALLOWED",
-  UNKNOWN = "UNKNOWN",
-}
-
 enum ChainPatrolApiUri {
-  ReportCreate = "api/v2/report/create",
   DiscordGuildStatus = "api/v2/internal/getDiscordGuildStatus",
 }
 
 class ChainPatrolApiRoutes {
   private static getURL(path: ChainPatrolApiUri) {
     return `${env.CHAINPATROL_API_URL}/${path}`;
-  }
-
-  public static reportCreateUrl() {
-    return ChainPatrolApiRoutes.getURL(ChainPatrolApiUri.ReportCreate);
   }
 
   public static discordGuildStatusUrl() {
@@ -99,35 +48,17 @@ export class ChainPatrolApiClient {
     }
   ) {
     try {
-      const response = await axios.post(path, body, { headers: headers });
+      const response = await fetch(path, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(body),
+      });
 
       try {
-        return response.data as T;
+        return (await response.json()) as T;
       } catch (error) {
         return null;
       }
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
-  }
-
-  private static async postResponse(
-    path: string,
-    body?: Record<string, unknown>
-  ) {
-    const response = await axios.post(path, body);
-
-    return response;
-  }
-
-  private static async post<T = any>(
-    path: string,
-    body?: Record<string, unknown>
-  ) {
-    try {
-      const response = await ChainPatrolApiClient.postResponse(path, body);
-      return response.data as T;
     } catch (error) {
       console.error(error);
       throw error;
@@ -144,15 +75,5 @@ export class ChainPatrolApiClient {
       );
 
     return checkResponse;
-  }
-
-  public static async createReport(report: ReportCreateType) {
-    const reportResponse =
-      await ChainPatrolApiClient.post<ReportCreateResponseType>(
-        ChainPatrolApiRoutes.reportCreateUrl(),
-        report
-      );
-
-    return reportResponse;
   }
 }

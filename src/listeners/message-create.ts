@@ -1,12 +1,7 @@
 import { Events } from "discord.js";
 import { CustomClient } from "~/client";
 import { extractUrls } from "~/utils/url";
-import {
-  AssetStatus,
-  AssetType,
-  ChainPatrolApiClient,
-  chainpatrol,
-} from "~/utils/api";
+import { ChainPatrolApiClient, chainpatrol } from "~/utils/api";
 import { Flags, isFlagEnabled } from "~/utils/flags";
 
 export default (client: CustomClient) => {
@@ -48,9 +43,9 @@ export default (client: CustomClient) => {
     for (const url of possibleUrls) {
       const response = await chainpatrol.asset.check({
         content: url,
-        type: AssetType.URL,
+        type: "URL",
       });
-      if (response.status === AssetStatus.BLOCKED) {
+      if (response.status === "BLOCKED") {
         await interaction.react("🚨");
         return;
       }

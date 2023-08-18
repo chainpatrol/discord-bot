@@ -4,14 +4,12 @@ import * as Sentry from "@sentry/node";
 import { CustomClient } from "~/client";
 import { env } from "~/env";
 
-Sentry.init({
-  dsn: env.SENTRY_SECRET,
-
-  // Set tracesSampleRate to 1.0 to capture 100%
-  // of transactions for performance monitoring.
-  // We recommend adjusting this value in production
-  tracesSampleRate: 0.01,
-});
+if (env.SENTRY_SECRET) {
+  Sentry.init({
+    dsn: env.SENTRY_SECRET,
+    tracesSampleRate: 0.01,
+  });
+}
 
 // Create a new client instance
 const client = new CustomClient({

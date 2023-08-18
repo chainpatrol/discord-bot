@@ -21,7 +21,7 @@ export async function execute(interaction: CommandInteraction) {
 
     const response = await chainpatrol.asset.check({
       content: url,
-      type: AssetType.URL,
+      type: "URL",
     });
 
     if (response.status === "BLOCKED") {

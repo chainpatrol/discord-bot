@@ -76,8 +76,9 @@ export async function execute(interaction: CommandInteraction) {
   const discordFormattedUsername = `${user.username}#${user.discriminator}`; // username in "user#1234" format
   const externalUser = {
     platform: "discord",
-    platformIdentifier: discordFormattedUsername,
+    platformIdentifier: user.id,
     avatarUrl: discordAvatarUrl,
+    displayName: discordFormattedUsername,
   };
 
   const response = await chainpatrol.report.create({
@@ -143,7 +144,8 @@ function generateModal(
     .setStyle(TextInputStyle.Paragraph)
     .setPlaceholder(`Please explain why you think this is a scam`)
     .setValue(
-      `reported by discord user ${usernameWithDiscriminator}, Discord ID: ${user.id}, from Server: ${guildId}`
+      //`reported by discord user ${usernameWithDiscriminator}, Discord ID: ${user.id}, from Server: ${guildId}`
+      ``
     );
   const descripionActionRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
@@ -155,9 +157,10 @@ function generateModal(
     .setLabel("Let us know how to best contact you")
     .setRequired(false)
     .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder(`Please provide your Discord username and ID`)
+    .setPlaceholder(`Please provide any additional contact information you may have`)
     .setValue(
-      `discord user ${usernameWithDiscriminator} , Discord ID: ${user.id}`
+      //`discord user ${usernameWithDiscriminator} , Discord ID: ${user.id}`
+      ``
     );
   const contactActionRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(

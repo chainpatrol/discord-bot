@@ -142,11 +142,7 @@ function generateModal(
     .setLabel("Description")
     .setRequired(false)
     .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder(`Please explain why you think this is a scam`)
-    .setValue(
-      //`reported by discord user ${usernameWithDiscriminator}, Discord ID: ${user.id}, from Server: ${guildId}`
-      ``
-    );
+    .setPlaceholder(`Please explain why you think this is a scam`);
   const descripionActionRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
       descriptionInput
@@ -157,10 +153,8 @@ function generateModal(
     .setLabel("Let us know how to best contact you")
     .setRequired(false)
     .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder(`Please provide any additional contact information you may have`)
-    .setValue(
-      //`discord user ${usernameWithDiscriminator} , Discord ID: ${user.id}`
-      ``
+    .setPlaceholder(
+      `Please provide any additional contact information you may have`
     );
   const contactActionRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(

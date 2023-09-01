@@ -27,6 +27,8 @@ export async function execute(interaction: CommandInteraction) {
     return;
   }
 
+  console.log(`running report command (user.id=${interaction.user.id})`);
+
   const { guildId, user, options } = interaction;
 
   const urlInput = options.getString("url", true);
@@ -37,6 +39,7 @@ export async function execute(interaction: CommandInteraction) {
   });
 
   if (assetCheckResponse.status === "BLOCKED") {
+    console.log(`url is already blocked (url=${urlInput})`);
     await interaction.reply({
       content: `⚠️ **This link is already Blocked by ChainPatrol.** No need to report it again.`,
       ephemeral: true,
@@ -45,12 +48,15 @@ export async function execute(interaction: CommandInteraction) {
   }
 
   if (assetCheckResponse.status === "ALLOWED") {
+    console.log(`url is on allowlist (url=${urlInput})`);
     await interaction.reply({
       content: `⚠️ **This link is on ChainPatrol's Allowlist.** \n\nIf you think this is a mistake, please file a [dispute](https://app.chainpatrol.io/dispute).`,
       ephemeral: true,
     });
     return;
   }
+
+  console.log(`url is not blocked, showing modal (url=${urlInput})`);
 
   const modal = generateModal(user, options, guildId);
 

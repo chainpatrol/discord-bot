@@ -9,6 +9,10 @@ export default (client: CustomClient) => {
       return;
     }
 
+    console.log(
+      `received interaction (command=${interaction.commandName}, user.id=${interaction.user.id})`
+    );
+
     const command = client.commands.get(interaction.commandName);
 
     if (!command) {

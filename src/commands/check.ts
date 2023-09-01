@@ -14,10 +14,14 @@ export async function execute(interaction: CommandInteraction) {
     return;
   }
 
+  console.log(`running check command (user.id=${interaction.user.id})`);
+
   try {
     const { options } = interaction;
     const url = options.getString("url", true);
     const escapedUrl = defangUrl(url);
+
+    console.log(`checking url (url=${url})`);
 
     const response = await chainpatrol.asset.check({
       content: url,

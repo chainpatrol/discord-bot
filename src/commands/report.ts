@@ -9,6 +9,7 @@ import {
   User,
   CacheType,
   CommandInteractionOptionResolver,
+  DiscordjsErrorCodes,
 } from "discord.js";
 import { chainpatrol } from "~/utils/api";
 
@@ -64,17 +65,39 @@ export async function execute(interaction: CommandInteraction) {
   await interaction.showModal(modal);
 
   // extract data from modal
-  const submissionResult = await interaction.awaitModalSubmit({
-    time: 60000,
-  });
+  let submissionInteraction: Awaited<
+    ReturnType<typeof interaction.awaitModalSubmit>
+  >;
 
-  const url = submissionResult.fields.getTextInputValue("urlInput");
+  try {
+    submissionInteraction = await interaction.awaitModalSubmit({
+      filter: (i) => i.customId === "reportModal" && i.user.id === user.id,
+      time: 60_000,
+    });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      "code" in error &&
+      error.code === DiscordjsErrorCodes.InteractionCollectorError
+    ) {
+      console.log(`modal timed out (url=${urlInput})`);
+      await interaction.followUp({
+        content: `⚠️ **You took too long to submit the report.** Please try again.`,
+        ephemeral: true,
+      });
+      return;
+    }
+    throw error;
+  }
+
+  const url = submissionInteraction.fields.getTextInputValue("urlInput");
   const escapedUrl = url.replace(".", "(dot)");
 
-  const title = submissionResult.fields.getTextInputValue("titleInput");
+  const title = submissionInteraction.fields.getTextInputValue("titleInput");
   const description =
-    submissionResult.fields.getTextInputValue("descriptionInput");
-  const contactInfo = submissionResult.fields.getTextInputValue("contactInput");
+    submissionInteraction.fields.getTextInputValue("descriptionInput");
+  const contactInfo =
+    submissionInteraction.fields.getTextInputValue("contactInput");
 
   // Getting the Discord user information
   const discordAvatarUrl = user.displayAvatarURL();
@@ -96,7 +119,7 @@ export async function execute(interaction: CommandInteraction) {
     assets: [{ content: url, status: "BLOCKED" }],
   });
 
-  await submissionResult.reply({
+  await submissionInteraction.reply({
     content: `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
     ephemeral: true,
   });

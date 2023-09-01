@@ -67,6 +67,8 @@ export async function execute(interaction: CommandInteraction) {
     return;
   }
 
+  await interaction.deferReply({ ephemeral: true });
+
   const { options } = interaction;
   const subcommand = options.getSubcommand(true);
 
@@ -83,8 +85,7 @@ export async function execute(interaction: CommandInteraction) {
   } catch (error) {
     // Handle errors
     console.error("error", error);
-    await interaction.reply({
-      ephemeral: true,
+    await interaction.editReply({
       content: "Error running setup command",
     });
   }
@@ -103,8 +104,7 @@ async function connect(interaction: CommandInteraction) {
   });
 
   if (!connectionStatus) {
-    await interaction.reply({
-      ephemeral: true,
+    await interaction.editReply({
       content: "Error checking bot status",
     });
     return;
@@ -113,8 +113,7 @@ async function connect(interaction: CommandInteraction) {
   const { connected } = connectionStatus;
 
   if (connected) {
-    await interaction.reply({
-      ephemeral: true,
+    await interaction.editReply({
       content:
         "The bot is already connected to an organization on ChainPatrol. Run `/setup disconnect` to disconnect the bot from your organization if you're an admin",
     });
@@ -122,8 +121,7 @@ async function connect(interaction: CommandInteraction) {
   }
 
   // Display a button to open the ChainPatrol login page
-  await interaction.reply({
-    ephemeral: true,
+  await interaction.editReply({
     content:
       "Click the button below to connect your ChainPatrol organization. After connecting, you can run `/setup status` to check the status of the bot's connection",
     components: [
@@ -155,8 +153,7 @@ async function disconnect(interaction: CommandInteraction) {
   });
 
   if (!connectionStatus) {
-    await interaction.reply({
-      ephemeral: true,
+    await interaction.editReply({
       content: "Error checking bot status",
     });
     return;
@@ -165,16 +162,14 @@ async function disconnect(interaction: CommandInteraction) {
   const { connected } = connectionStatus;
 
   if (!connected) {
-    await interaction.reply({
-      ephemeral: true,
+    await interaction.editReply({
       content: "The bot is not connected to any organization on ChainPatrol",
     });
     return;
   }
 
   // Display a button to open the ChainPatrol disconnect page
-  await interaction.reply({
-    ephemeral: true,
+  await interaction.editReply({
     content:
       "Click the button below to disconnect your ChainPatrol organization. After disconnecting, you can run `/setup status` to check the status of the bot's connection",
     components: [
@@ -207,8 +202,7 @@ async function status(interaction: CommandInteraction) {
     );
 
     if (!connectionStatus) {
-      await interaction.reply({
-        ephemeral: true,
+      await interaction.editReply({
         content: "Error checking bot status",
       });
       return;
@@ -218,8 +212,7 @@ async function status(interaction: CommandInteraction) {
       connectionStatus;
 
     if (!connected) {
-      await interaction.reply({
-        ephemeral: true,
+      await interaction.editReply({
         content:
           "❌ The bot is not connected to any organization on ChainPatrol. Run `/setup connect` to connect the bot to your organization",
       });
@@ -233,21 +226,18 @@ async function status(interaction: CommandInteraction) {
     }
 
     if (!channel) {
-      await interaction.reply({
-        ephemeral: true,
+      await interaction.editReply({
         content: `✅ The bot is connected to [${organizationName}](${organizationUrl}) on ChainPatrol`,
       });
       return;
     }
 
-    await interaction.reply({
-      ephemeral: true,
+    await interaction.editReply({
       content: `✅ The bot is connected to [${organizationName}](${organizationUrl}) on ChainPatrol and is posting alerts to <#${channelId}>`,
     });
   } catch (e) {
     console.error("error", e);
-    await interaction.reply({
-      ephemeral: true,
+    await interaction.editReply({
       content: "Error checking bot status",
     });
   }
@@ -272,16 +262,14 @@ async function feed(interaction: CommandInteraction) {
     );
 
     if (!connectionStatus) {
-      await interaction.reply({
-        ephemeral: true,
+      await interaction.editReply({
         content: "Error checking bot status",
       });
       return;
     }
 
     if (!connectionStatus.connected) {
-      await interaction.reply({
-        ephemeral: true,
+      await interaction.editReply({
         content:
           "❌ The bot is not connected to any organization on ChainPatrol. Run `/setup connect` to connect the bot to your organization",
       });
@@ -289,8 +277,7 @@ async function feed(interaction: CommandInteraction) {
     }
 
     // Display a button to open the ChainPatrol connect feed page
-    await interaction.reply({
-      ephemeral: true,
+    await interaction.editReply({
       content:
         "Click the button below to connect your ChainPatrol organization to this channel. After connecting, you can run `/setup status` to check the status of the bot's connection",
       components: [
@@ -309,8 +296,7 @@ async function feed(interaction: CommandInteraction) {
     });
   } catch (e) {
     console.error("error", e);
-    await interaction.reply({
-      ephemeral: true,
+    await interaction.editReply({
       content: "Error setting up feed",
     });
   }

@@ -14,6 +14,8 @@ export async function execute(interaction: CommandInteraction) {
     return;
   }
 
+  await interaction.deferReply({ ephemeral: true });
+
   console.log(`running check command (user.id=${interaction.user.id})`);
 
   try {
@@ -29,33 +31,28 @@ export async function execute(interaction: CommandInteraction) {
     });
 
     if (response.status === "BLOCKED") {
-      await interaction.reply({
+      await interaction.editReply({
         content: `🚨 **Alert** 🚨 \n\nThis link is a scam! \`${escapedUrl}\` \n\n_Please **DO NOT** click on this link._`,
-        ephemeral: true,
       });
     } else if (response.status === "ALLOWED") {
-      await interaction.reply({
+      await interaction.editReply({
         content: `✅ This link looks safe! \`${escapedUrl}\``,
-        ephemeral: true,
       });
     } else if (response.status === "UNKNOWN") {
-      await interaction.reply({
+      await interaction.editReply({
         content: `⚠️ **Warning** ⚠️ \n\nThis link is not currently in our database: \`${escapedUrl}\` \n\n_Please be careful and **DO NOT** click on this link unless you are sure it's safe._`,
-        ephemeral: true,
       });
     } else {
-      await interaction.reply({
+      await interaction.editReply({
         content: `❓ We're not sure about this link. \`${escapedUrl}\``,
-        ephemeral: true,
       });
     }
   } catch (error) {
     // Handle errors
     console.error("error", error);
 
-    await interaction.reply({
+    await interaction.editReply({
       content: "Error with checking link",
-      ephemeral: true,
     });
   }
 }

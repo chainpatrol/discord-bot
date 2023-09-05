@@ -9,7 +9,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@chainpatrol/discord-bot@workspace:."
   dependencies:
-    "@chainpatrol/sdk": ^0.2.1
+    "@chainpatrol/sdk": ^0.2.2
     "@sentry/node": ^7.50.0
     "@types/node": ^18.0.6
     discord.js: ^14.7.1
@@ -22,15 +22,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@chainpatrol/sdk@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "@chainpatrol/sdk@npm:0.2.1"
+"@chainpatrol/sdk@npm:^0.2.2":
+  version: 0.2.2
+  resolution: "@chainpatrol/sdk@npm:0.2.2"
   dependencies:
     tldts: ^6.0.8
     tsup: ^7.0.0
     typescript: ^5.1.3
     zod: ^3.21.4
-  checksum: 88afc33b548eda2cdc627579d2fbb9188254ebede456513e4fc90087de510ce2883b4b2ab65d008094ae484b50ecc9eab4b3ae1c19508c97a5b9cad104cac34e
+  checksum: c26165056feb1ba628043632f1f4692ebe2b0b66ce1757f2209eef9149ff6e2f866d3af96ffa03f6f94bae9e200b7bd551f8748b350ad07162eb50ca1c4fc41c
   languageName: node
   linkType: hard
 

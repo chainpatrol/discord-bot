@@ -50,7 +50,6 @@ export default (client: CustomClient) => {
     for (const url of possibleUrls) {
       const response = await chainpatrol.asset.check({
         content: url,
-        type: "URL",
       });
       if (response.status === "BLOCKED") {
         await newInteraction.react("🚨");

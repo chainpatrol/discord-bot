@@ -25,10 +25,7 @@ export async function execute(interaction: CommandInteraction) {
 
     console.log(`checking url (url=${url})`);
 
-    const response = await chainpatrol.asset.check({
-      content: url,
-      type: "URL",
-    });
+    const response = await chainpatrol.asset.check({ content: url });
 
     if (response.status === "BLOCKED") {
       await interaction.editReply({

@@ -35,7 +35,6 @@ export async function execute(interaction: CommandInteraction) {
   const urlInput = options.getString("url", true);
 
   const assetCheckResponse = await chainpatrol.asset.check({
-    type: "URL",
     content: urlInput,
   });
 

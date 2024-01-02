@@ -146,7 +146,7 @@ function generateModal(
     // Short means only a single line of text
     .setStyle(TextInputStyle.Short)
     .setValue(url)
-    .setPlaceholder(url);
+    .setPlaceholder("example.com");
   // An action row only holds one text input,
   // so you need one action row per text input.
   const urlActionRow =
@@ -158,7 +158,7 @@ function generateModal(
     .setCustomId("titleInput")
     .setLabel("Title")
     .setStyle(TextInputStyle.Short)
-    .setPlaceholder(`Discord Report: ${url}`)
+    .setPlaceholder("ex. Phishing Scam on example.com")
     .setValue(`Discord Report: ${url}`);
   const titleActionRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(

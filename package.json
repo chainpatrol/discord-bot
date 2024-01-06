@@ -19,7 +19,7 @@
     "dotenv": "^16.0.3",
     "glob": "^10.2.3",
     "node-fetch": "^3.2.6",
-    "zod": "^3.21.4"
+    "zod": "^3.22.3"
   },
   "devDependencies": {
     "@types/node": "^18.0.6",

@@ -24,6 +24,7 @@ export class CustomClient extends Client {
         this.commands.set(command.data.name, command);
       } else {
         logger.warn(
+          { command },
           `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`
         );
       }

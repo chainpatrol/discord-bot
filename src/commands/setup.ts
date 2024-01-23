@@ -85,7 +85,7 @@ export async function execute(interaction: CommandInteraction) {
     }
   } catch (error) {
     // Handle errors
-    logger.error("error", error);
+    logger.error(error);
     await interaction.editReply({
       content: "Error running setup command",
     });
@@ -236,8 +236,8 @@ async function status(interaction: CommandInteraction) {
     await interaction.editReply({
       content: `✅ The bot is connected to [${organizationName}](${organizationUrl}) on ChainPatrol and is posting alerts to <#${channelId}>`,
     });
-  } catch (e) {
-    logger.error("error", e);
+  } catch (error) {
+    logger.error(error);
     await interaction.editReply({
       content: "Error checking bot status",
     });
@@ -295,8 +295,8 @@ async function feed(interaction: CommandInteraction) {
         },
       ],
     });
-  } catch (e) {
-    logger.error("error", e);
+  } catch (error) {
+    logger.error(error);
     await interaction.editReply({
       content: "Error setting up feed",
     });

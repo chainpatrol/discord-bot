@@ -24,13 +24,13 @@ const client = new CustomClient({
 process.on(
   "unhandledRejection",
   (reason: {} | null | undefined, promise: Promise<any>) => {
-    logger.fatal("Unhandled Rejection at:", promise, "reason:", reason);
+    logger.fatal({ reason, promise }, "Unhandled Promise rejection");
     Sentry.captureException(reason);
   }
 );
 
 process.on("uncaughtException", (err, origin) => {
-  logger.fatal("Fatal error at:", origin, "reason:", err);
+  logger.fatal({ err, origin }, "Uncaught Exception");
   Sentry.captureException(err);
   process.exit(1); // We don't want to continue the process if this error occurs
 });

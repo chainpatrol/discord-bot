@@ -12,9 +12,7 @@ export default (client: CustomClient) => {
       return;
     }
 
-    logger.info(
-      `received interaction (command=${interaction.commandName}, user.id=${interaction.user.id})`
-    );
+    logger.info({ interaction }, "Received interaction");
 
     const command = client.commands.get(interaction.commandName);
 

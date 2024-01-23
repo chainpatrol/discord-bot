@@ -18,7 +18,7 @@ export function isFlagEnabled(slug: string, flag: Flags): boolean {
 
   const config = orgFlags[slug];
 
-  if (!(flag in config)) {
+  if (!config || !(flag in config)) {
     return false;
   }
 

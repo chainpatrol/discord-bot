@@ -56,6 +56,6 @@ const deployCommands = async () => {
 deployCommands()
   .then(() => logger.info("Done!"))
   .catch((error) => {
-    logger.error("error", error);
+    logger.error(error);
     process.exit(1);
   });

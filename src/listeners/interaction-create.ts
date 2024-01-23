@@ -26,7 +26,7 @@ export default (client: CustomClient) => {
     try {
       await command.execute(interaction);
     } catch (error) {
-      logger.error("error", error);
+      logger.error(error);
       Sentry.captureException(error);
 
       const content = `There was an unexpected error while executing this command!`;

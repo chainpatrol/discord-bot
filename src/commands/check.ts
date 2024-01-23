@@ -1,7 +1,7 @@
-import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import { AssetType, chainpatrol } from "~/utils/api";
-import { logger } from "~/utils/logger";
+import { SlashCommandBuilder } from "discord.js";
+import { chainpatrol } from "~/utils/api";
 import { defangUrl } from "~/utils/url";
+import { CommandContext } from "../types";
 
 export const data = new SlashCommandBuilder()
   .setName("check")
@@ -10,7 +10,7 @@ export const data = new SlashCommandBuilder()
     option.setName("url").setDescription("The link to check").setRequired(true)
   );
 
-export async function execute(interaction: CommandInteraction) {
+export async function execute({ interaction, logger }: CommandContext) {
   if (!interaction.isChatInputCommand()) {
     return;
   }

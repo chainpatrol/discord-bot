@@ -21,8 +21,14 @@ export default (client: CustomClient) => {
       return;
     }
 
+    const interactionLogger = logger.child({
+      command: interaction.commandName,
+      interactionId: interaction.id,
+      userId: interaction.user.id,
+    });
+
     try {
-      await command.execute(interaction);
+      await command.execute({ interaction, logger: interactionLogger });
     } catch (error) {
       logger.error(error);
       Sentry.captureException(error);

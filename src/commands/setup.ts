@@ -1,7 +1,6 @@
 import {
   ButtonStyle,
   ChannelType,
-  CommandInteraction,
   ComponentType,
   GuildBasedChannel,
   PermissionFlagsBits,
@@ -9,7 +8,7 @@ import {
 } from "discord.js";
 import { env } from "~/env";
 import { ChainPatrolApiClient } from "~/utils/api";
-import { logger } from "~/utils/logger";
+import { CommandContext } from "../types";
 
 export const data = new SlashCommandBuilder()
   .setName("setup")
@@ -45,7 +44,9 @@ export const data = new SlashCommandBuilder()
       )
   );
 
-export async function execute(interaction: CommandInteraction) {
+export async function execute(ctx: CommandContext) {
+  const { interaction, logger } = ctx;
+
   if (!interaction.isChatInputCommand()) {
     return;
   }
@@ -75,13 +76,13 @@ export async function execute(interaction: CommandInteraction) {
 
   try {
     if (subcommand === "connect") {
-      await connect(interaction);
+      await connect(ctx);
     } else if (subcommand === "disconnect") {
-      await disconnect(interaction);
+      await disconnect(ctx);
     } else if (subcommand === "status") {
-      await status(interaction);
+      await status(ctx);
     } else if (subcommand === "feed") {
-      await feed(interaction);
+      await feed(ctx);
     }
   } catch (error) {
     // Handle errors
@@ -92,7 +93,7 @@ export async function execute(interaction: CommandInteraction) {
   }
 }
 
-async function connect(interaction: CommandInteraction) {
+async function connect({ interaction }: CommandContext) {
   const guildId = interaction.guildId;
 
   if (!guildId) {
@@ -141,7 +142,7 @@ async function connect(interaction: CommandInteraction) {
   });
 }
 
-async function disconnect(interaction: CommandInteraction) {
+async function disconnect({ interaction }: CommandContext) {
   const guildId = interaction.guildId;
 
   if (!guildId) {
@@ -189,7 +190,7 @@ async function disconnect(interaction: CommandInteraction) {
   });
 }
 
-async function status(interaction: CommandInteraction) {
+async function status({ interaction, logger }: CommandContext) {
   const guildId = interaction.guildId;
 
   if (!guildId) {
@@ -244,7 +245,7 @@ async function status(interaction: CommandInteraction) {
   }
 }
 
-async function feed(interaction: CommandInteraction) {
+async function feed({ interaction, logger }: CommandContext) {
   const guildId = interaction.guildId;
 
   if (!guildId) {

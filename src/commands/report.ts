@@ -13,7 +13,7 @@ import {
   DiscordjsError,
 } from "discord.js";
 import { chainpatrol } from "~/utils/api";
-import { logger } from "~/utils/logger";
+import { CommandContext } from "../types";
 
 export const data = new SlashCommandBuilder()
   .setName("report")
@@ -32,7 +32,7 @@ export const data = new SlashCommandBuilder()
  * It is critical that you call `interaction.showModal` as early as possible in this function
  * to ensure that the modal is shown to the user before the 3 second timeout.
  */
-export async function execute(interaction: CommandInteraction) {
+export async function execute({ interaction, logger }: CommandContext) {
   if (!interaction.isChatInputCommand()) {
     return;
   }

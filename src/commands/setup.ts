@@ -9,6 +9,7 @@ import {
 } from "discord.js";
 import { env } from "~/env";
 import { ChainPatrolApiClient } from "~/utils/api";
+import { logger } from "~/utils/logger";
 
 export const data = new SlashCommandBuilder()
   .setName("setup")
@@ -84,7 +85,7 @@ export async function execute(interaction: CommandInteraction) {
     }
   } catch (error) {
     // Handle errors
-    console.error("error", error);
+    logger.error("error", error);
     await interaction.editReply({
       content: "Error running setup command",
     });
@@ -236,7 +237,7 @@ async function status(interaction: CommandInteraction) {
       content: `✅ The bot is connected to [${organizationName}](${organizationUrl}) on ChainPatrol and is posting alerts to <#${channelId}>`,
     });
   } catch (e) {
-    console.error("error", e);
+    logger.error("error", e);
     await interaction.editReply({
       content: "Error checking bot status",
     });
@@ -295,7 +296,7 @@ async function feed(interaction: CommandInteraction) {
       ],
     });
   } catch (e) {
-    console.error("error", e);
+    logger.error("error", e);
     await interaction.editReply({
       content: "Error setting up feed",
     });

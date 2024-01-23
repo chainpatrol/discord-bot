@@ -3,9 +3,10 @@ import { CustomClient } from "~/client";
 import { extractUrls } from "~/utils/url";
 import { ChainPatrolApiClient, chainpatrol } from "~/utils/api";
 import { Flags, isFlagEnabled } from "~/utils/flags";
+import { logger } from "~/utils/logger";
 
 export default (client: CustomClient) => {
-  console.log("MessageCreate listener loaded.");
+  logger.info("MessageCreate listener loaded.");
 
   client.on(Events.MessageCreate, async (interaction) => {
     if (interaction.author.bot) {

@@ -1,5 +1,6 @@
 import { ChainPatrolClient, AssetStatus, AssetType } from "@chainpatrol/sdk";
 import { env } from "~/env";
+import { logger } from "./logger";
 
 export type { AssetStatus, AssetType };
 
@@ -60,7 +61,7 @@ export class ChainPatrolApiClient {
         return null;
       }
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       throw error;
     }
   }

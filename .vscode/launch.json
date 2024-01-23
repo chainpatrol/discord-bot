@@ -3,11 +3,13 @@
   "configurations": [
     {
       "name": "App",
-      "type": "node",
+      "type": "node-terminal",
       "request": "launch",
-      "runtimeExecutable": "doppler",
-      "runtimeArgs": ["run", "--", "yarn", "dev"],
-      "internalConsoleOptions": "openOnSessionStart"
+      "command": "doppler run -- yarn dev",
+      "env": {
+        "NODE_ENV": "development",
+        "LOG_LEVEL": "debug"
+      }
     }
   ]
 }

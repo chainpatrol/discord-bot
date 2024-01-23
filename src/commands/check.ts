@@ -1,5 +1,6 @@
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
 import { AssetType, chainpatrol } from "~/utils/api";
+import { logger } from "~/utils/logger";
 import { defangUrl } from "~/utils/url";
 
 export const data = new SlashCommandBuilder()
@@ -16,14 +17,14 @@ export async function execute(interaction: CommandInteraction) {
 
   await interaction.deferReply({ ephemeral: true });
 
-  console.log(`running check command (user.id=${interaction.user.id})`);
+  logger.info(`running check command (user.id=${interaction.user.id})`);
 
   try {
     const { options } = interaction;
     const url = options.getString("url", true);
     const escapedUrl = defangUrl(url);
 
-    console.log(`checking url (url=${url})`);
+    logger.info(`checking url (url=${url})`);
 
     const response = await chainpatrol.asset.check({ content: url });
 
@@ -46,7 +47,7 @@ export async function execute(interaction: CommandInteraction) {
     }
   } catch (error) {
     // Handle errors
-    console.error("error", error);
+    logger.error("error", error);
 
     await interaction.editReply({
       content: "Error with checking link",

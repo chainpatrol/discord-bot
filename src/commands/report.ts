@@ -12,6 +12,7 @@ import {
   DiscordjsErrorCodes,
 } from "discord.js";
 import { chainpatrol } from "~/utils/api";
+import { logger } from "~/utils/logger";
 
 export const data = new SlashCommandBuilder()
   .setName("report")
@@ -28,7 +29,7 @@ export async function execute(interaction: CommandInteraction) {
     return;
   }
 
-  console.log(`running report command (user.id=${interaction.user.id})`);
+  logger.info(`running report command (user.id=${interaction.user.id})`);
 
   const { guildId, user, options } = interaction;
 
@@ -39,7 +40,7 @@ export async function execute(interaction: CommandInteraction) {
   });
 
   if (assetCheckResponse.status === "BLOCKED") {
-    console.log(`url is already blocked (url=${urlInput})`);
+    logger.info(`url is already blocked (url=${urlInput})`);
     await interaction.reply({
       content: `⚠️ **This link is already Blocked by ChainPatrol.** No need to report it again.`,
       ephemeral: true,
@@ -48,7 +49,7 @@ export async function execute(interaction: CommandInteraction) {
   }
 
   if (assetCheckResponse.status === "ALLOWED") {
-    console.log(`url is on allowlist (url=${urlInput})`);
+    logger.info(`url is on allowlist (url=${urlInput})`);
     await interaction.reply({
       content: `⚠️ **This link is on ChainPatrol's Allowlist.** \n\nIf you think this is a mistake, please file a [dispute](https://app.chainpatrol.io/dispute).`,
       ephemeral: true,
@@ -56,7 +57,7 @@ export async function execute(interaction: CommandInteraction) {
     return;
   }
 
-  console.log(`url is not blocked, showing modal (url=${urlInput})`);
+  logger.info(`url is not blocked, showing modal (url=${urlInput})`);
 
   const modal = generateModal(user, options, guildId);
 
@@ -79,7 +80,7 @@ export async function execute(interaction: CommandInteraction) {
       "code" in error &&
       error.code === DiscordjsErrorCodes.InteractionCollectorError
     ) {
-      console.log(`modal timed out (url=${urlInput})`);
+      logger.info(`modal timed out (url=${urlInput})`);
       await interaction.followUp({
         content: `⚠️ **You took too long to submit the report.** Please try again.`,
         ephemeral: true,

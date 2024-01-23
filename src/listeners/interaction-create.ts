@@ -2,32 +2,31 @@ import { Events } from "discord.js";
 import * as Sentry from "@sentry/node";
 
 import { CustomClient } from "~/client";
+import { logger } from "~/utils/logger";
 
 export default (client: CustomClient) => {
-  console.log("InteractionCreate listener loaded.");
+  logger.info("InteractionCreate listener loaded.");
 
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) {
       return;
     }
 
-    console.log(
+    logger.info(
       `received interaction (command=${interaction.commandName}, user.id=${interaction.user.id})`
     );
 
     const command = client.commands.get(interaction.commandName);
 
     if (!command) {
-      console.error(
-        `No command matching ${interaction.commandName} was found.`
-      );
+      logger.error(`No command matching ${interaction.commandName} was found.`);
       return;
     }
 
     try {
       await command.execute(interaction);
     } catch (error) {
-      console.error("error", error);
+      logger.error("error", error);
       Sentry.captureException(error);
 
       const content = `There was an unexpected error while executing this command!`;

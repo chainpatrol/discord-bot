@@ -1,5 +1,6 @@
 import { Client, ClientOptions, Collection } from "discord.js";
 import { readDirectory } from "~/utils/file";
+import { logger } from "./utils/logger";
 
 export class CustomClient extends Client {
   commands: Collection<string, { data: any; execute: any }>;
@@ -22,7 +23,7 @@ export class CustomClient extends Client {
       if ("data" in command && "execute" in command) {
         this.commands.set(command.data.name, command);
       } else {
-        console.log(
+        logger.warn(
           `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`
         );
       }
@@ -41,7 +42,7 @@ export class CustomClient extends Client {
       if (listener.default && typeof listener.default === "function") {
         listener.default(this);
       } else {
-        console.log(
+        logger.warn(
           `[WARNING] The listener at ${filePath} is missing a default export.`
         );
       }

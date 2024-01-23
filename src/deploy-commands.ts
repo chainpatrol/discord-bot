@@ -1,6 +1,7 @@
 import { REST, Routes } from "discord.js";
 import { env } from "~/env";
 import { readDirectory } from "~/utils/file";
+import { logger } from "./utils/logger";
 
 const clientId = env["DISCORD_APPLICATION_ID"];
 const guildId = env["TEST_DISCORD_SERVER_ID"];
@@ -22,7 +23,7 @@ const rest = new REST({ version: "10" }).setToken(token);
 
 // and deploy your commands!
 const deployCommands = async () => {
-  console.log(
+  logger.info(
     `Started refreshing ${commands.length} application (/) commands.`
   );
 
@@ -31,7 +32,7 @@ const deployCommands = async () => {
       body: commands,
     })) as any[];
 
-    console.log(
+    logger.info(
       `Successfully reloaded ${data.length} application (/) commands across all servers (global).`
     );
   } else if (guildId) {
@@ -42,7 +43,7 @@ const deployCommands = async () => {
       // { body: [] }
     )) as any[];
 
-    console.log(
+    logger.info(
       `Successfully reloaded ${data.length} application (/) commands on dev server ${guildId}.`
     );
   } else {
@@ -53,8 +54,8 @@ const deployCommands = async () => {
 };
 
 deployCommands()
-  .then(() => console.log("Done!"))
+  .then(() => logger.info("Done!"))
   .catch((error) => {
-    console.error("error", error);
+    logger.error("error", error);
     process.exit(1);
   });

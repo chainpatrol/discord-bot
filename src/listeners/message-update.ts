@@ -3,9 +3,10 @@ import { CustomClient } from "~/client";
 import { extractUrls } from "~/utils/url";
 import { AssetType, ChainPatrolApiClient, chainpatrol } from "~/utils/api";
 import { Flags, isFlagEnabled } from "~/utils/flags";
+import { logger } from "~/utils/logger";
 
 export default (client: CustomClient) => {
-  console.log("MessageUpdate listener loaded.");
+  logger.info("MessageUpdate listener loaded.");
 
   client.on(Events.MessageUpdate, async (oldInteraction, newInteraction) => {
     if (!newInteraction.content) {

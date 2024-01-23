@@ -60,7 +60,7 @@ export class ChainPatrolApiClient {
         return null;
       }
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       throw error;
     }
   }

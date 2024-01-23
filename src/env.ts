@@ -3,6 +3,11 @@ import { z } from "zod";
 require("dotenv").config();
 
 const envSchema = z.object({
+  LOG_LEVEL: z
+    .enum(["debug", "info", "warn", "error", "fatal"])
+    .optional()
+    .default("info"),
+  NODE_ENV: z.enum(["development", "production", "test"]).optional(),
   DISCORD_APPLICATION_ID: z.string(),
   DISCORD_BOT_SECRET: z.string(),
   CHAINPATROL_API_URL: z.string().url(),
@@ -10,6 +15,8 @@ const envSchema = z.object({
   TEST_DISCORD_SERVER_ID: z.string().optional(),
   DISCORD_DEPLOY_GLOBAL: z.coerce.boolean().optional().default(false),
   SENTRY_SECRET: z.string().optional(),
+  AXIOM_DATASET: z.string().optional(),
+  AXIOM_TOKEN: z.string().optional(),
 });
 
 const result = envSchema.safeParse(process.env);

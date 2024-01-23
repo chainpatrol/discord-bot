@@ -25,6 +25,13 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
   );
 
+/**
+ * This function is called when the `/report` command is executed.
+ *
+ * IMPORTANT: This function opens a modal to collect additional information from the user.
+ * It is critical that you call `interaction.showModal` as early as possible in this function
+ * to ensure that the modal is shown to the user before the 3 second timeout.
+ */
 export async function execute(interaction: CommandInteraction) {
   if (!interaction.isChatInputCommand()) {
     return;

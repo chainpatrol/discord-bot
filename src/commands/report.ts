@@ -10,6 +10,7 @@ import {
   CacheType,
   CommandInteractionOptionResolver,
   DiscordjsErrorCodes,
+  DiscordjsError,
 } from "discord.js";
 import { chainpatrol } from "~/utils/api";
 import { logger } from "~/utils/logger";
@@ -35,33 +36,8 @@ export async function execute(interaction: CommandInteraction) {
 
   const urlInput = options.getString("url", true);
 
-  const assetCheckResponse = await chainpatrol.asset.check({
-    content: urlInput,
-  });
-
-  if (assetCheckResponse.status === "BLOCKED") {
-    logger.info(`url is already blocked (url=${urlInput})`);
-    await interaction.reply({
-      content: `⚠️ **This link is already Blocked by ChainPatrol.** No need to report it again.`,
-      ephemeral: true,
-    });
-    return;
-  }
-
-  if (assetCheckResponse.status === "ALLOWED") {
-    logger.info(`url is on allowlist (url=${urlInput})`);
-    await interaction.reply({
-      content: `⚠️ **This link is on ChainPatrol's Allowlist.** \n\nIf you think this is a mistake, please file a [dispute](https://app.chainpatrol.io/dispute).`,
-      ephemeral: true,
-    });
-    return;
-  }
-
-  logger.info(`url is not blocked, showing modal (url=${urlInput})`);
-
-  const modal = generateModal(user, options, guildId);
-
   // Show the modal to the user
+  const modal = generateModal(user, options, guildId);
   await interaction.showModal(modal);
 
   // extract data from modal
@@ -110,19 +86,66 @@ export async function execute(interaction: CommandInteraction) {
     displayName: discordFormattedUsername,
   };
 
-  const response = await chainpatrol.report.create({
-    discordGuildId: guildId ?? undefined,
-    externalReporter: externalUser,
-    title,
-    description,
-    contactInfo,
-    assets: [{ content: url, status: "BLOCKED" }],
-  });
+  try {
+    const response = await chainpatrol.report.create({
+      discordGuildId: guildId ?? undefined,
+      externalReporter: externalUser,
+      title,
+      description,
+      contactInfo,
+      assets: [{ content: url, status: "BLOCKED" }],
+    });
 
-  await submissionInteraction.reply({
-    content: `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
-    ephemeral: true,
-  });
+    await submissionInteraction.reply({
+      content: `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
+      ephemeral: true,
+    });
+  } catch (error) {
+    logger.error(error, "Unable to submit report");
+
+    if (error instanceof DiscordjsError) {
+      throw error;
+    }
+
+    logger.info(
+      "checking if the reason submission failed is because the asset is already blocked or on the allowlist"
+    );
+
+    try {
+      const assetCheckResponse = await chainpatrol.asset.check({
+        content: urlInput,
+      });
+
+      if (assetCheckResponse.status === "BLOCKED") {
+        logger.info(`url is already blocked (url=${urlInput})`);
+        await submissionInteraction.reply({
+          content: `⚠️ **This link is already Blocked by ChainPatrol.** No need to report it again.`,
+          ephemeral: true,
+        });
+        return;
+      }
+
+      if (assetCheckResponse.status === "ALLOWED") {
+        logger.info(`url is on allowlist (url=${urlInput})`);
+        await submissionInteraction.reply({
+          content: `⚠️ **This link is on ChainPatrol's Allowlist.** \n\nIf you think this is a mistake, please file a [dispute](https://app.chainpatrol.io/dispute).`,
+          ephemeral: true,
+        });
+        return;
+      }
+    } catch (error) {
+      logger.error(error, "Unable to check asset status (url=%s)", urlInput);
+
+      if (error instanceof DiscordjsError) {
+        throw error;
+      }
+
+      await submissionInteraction.reply({
+        content: `⚠️ **Something went wrong trying to submit your report.** Please try again later.`,
+        ephemeral: true,
+      });
+    }
+  }
 }
 
 function generateModal(

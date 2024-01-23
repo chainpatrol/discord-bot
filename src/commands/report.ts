@@ -13,7 +13,7 @@ import {
   DiscordjsError,
 } from "discord.js";
 import { chainpatrol } from "~/utils/api";
-import { logger } from "~/utils/logger";
+import { CommandContext } from "../types";
 
 export const data = new SlashCommandBuilder()
   .setName("report")
@@ -32,12 +32,12 @@ export const data = new SlashCommandBuilder()
  * It is critical that you call `interaction.showModal` as early as possible in this function
  * to ensure that the modal is shown to the user before the 3 second timeout.
  */
-export async function execute(interaction: CommandInteraction) {
+export async function execute({ interaction, logger }: CommandContext) {
   if (!interaction.isChatInputCommand()) {
     return;
   }
 
-  logger.info(`running report command (user.id=${interaction.user.id})`);
+  logger.info({ user: interaction.user }, "Running report command");
 
   const { guildId, user, options } = interaction;
 
@@ -63,7 +63,7 @@ export async function execute(interaction: CommandInteraction) {
       "code" in error &&
       error.code === DiscordjsErrorCodes.InteractionCollectorError
     ) {
-      logger.info(`modal timed out (url=${urlInput})`);
+      logger.info({ url: urlInput, error }, "Modal timed out");
       await interaction.followUp({
         content: `⚠️ **You took too long to submit the report.** Please try again.`,
         ephemeral: true,
@@ -124,7 +124,7 @@ export async function execute(interaction: CommandInteraction) {
       });
 
       if (assetCheckResponse.status === "BLOCKED") {
-        logger.info(`url is already blocked (url=${urlInput})`);
+        logger.info({ url: urlInput }, "URL is already blocked");
         await submissionInteraction.reply({
           content: `⚠️ **This link is already Blocked by ChainPatrol.** No need to report it again.`,
           ephemeral: true,
@@ -133,7 +133,7 @@ export async function execute(interaction: CommandInteraction) {
       }
 
       if (assetCheckResponse.status === "ALLOWED") {
-        logger.info(`url is on allowlist (url=${urlInput})`);
+        logger.info({ url: urlInput }, "URL is on allowlist");
         await submissionInteraction.reply({
           content: `⚠️ **This link is on ChainPatrol's Allowlist.** \n\nIf you think this is a mistake, please file a [dispute](https://app.chainpatrol.io/dispute).`,
           ephemeral: true,

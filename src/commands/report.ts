@@ -11,17 +11,17 @@ import {
   CommandInteractionOptionResolver,
   DiscordjsErrorCodes,
   DiscordjsError,
-} from "discord.js";
-import { chainpatrol } from "~/utils/api";
-import { logger } from "~/utils/logger";
+} from 'discord.js';
+import { chainpatrol } from '~/utils/api';
+import { logger } from '~/utils/logger';
 
 export const data = new SlashCommandBuilder()
-  .setName("report")
-  .setDescription("reports a scam link to ChainPatrol")
+  .setName('report')
+  .setDescription('reports a scam link to ChainPatrol')
   .addStringOption((option) =>
     option
-      .setName("url")
-      .setDescription("The scam link to report")
+      .setName('url')
+      .setDescription('The scam link to report')
       .setRequired(true)
   );
 
@@ -41,7 +41,7 @@ export async function execute(interaction: CommandInteraction) {
 
   const { guildId, user, options } = interaction;
 
-  const urlInput = options.getString("url", true);
+  const urlInput = options.getString('url', true);
 
   // Show the modal to the user
   const modal = generateModal(user, options, guildId);
@@ -54,13 +54,13 @@ export async function execute(interaction: CommandInteraction) {
 
   try {
     submissionInteraction = await interaction.awaitModalSubmit({
-      filter: (i) => i.customId === "reportModal" && i.user.id === user.id,
-      time: 60_000,
+      filter: (i) => i.customId === 'reportModal' && i.user.id === user.id,
+      time: 240_000,
     });
   } catch (error) {
     if (
       error instanceof Error &&
-      "code" in error &&
+      'code' in error &&
       error.code === DiscordjsErrorCodes.InteractionCollectorError
     ) {
       logger.info(`modal timed out (url=${urlInput})`);
@@ -73,21 +73,21 @@ export async function execute(interaction: CommandInteraction) {
     throw error;
   }
 
-  const url = submissionInteraction.fields.getTextInputValue("urlInput");
-  const escapedUrl = url.replace(".", "(dot)");
+  const url = submissionInteraction.fields.getTextInputValue('urlInput');
+  const escapedUrl = url.replace('.', '(dot)');
 
-  const title = submissionInteraction.fields.getTextInputValue("titleInput");
+  const title = submissionInteraction.fields.getTextInputValue('titleInput');
   const description =
-    submissionInteraction.fields.getTextInputValue("descriptionInput");
+    submissionInteraction.fields.getTextInputValue('descriptionInput');
   const contactInfo =
-    submissionInteraction.fields.getTextInputValue("contactInput");
+    submissionInteraction.fields.getTextInputValue('contactInput');
 
   // Getting the Discord user information
   const discordAvatarUrl = user.displayAvatarURL();
   const discordPublicUsername = user.username;
   const discordFormattedUsername = `${user.username}#${user.discriminator}`; // username in "user#1234" format
   const externalUser = {
-    platform: "discord",
+    platform: 'discord',
     platformIdentifier: user.id,
     avatarUrl: discordAvatarUrl,
     displayName: discordFormattedUsername,
@@ -100,7 +100,7 @@ export async function execute(interaction: CommandInteraction) {
       title,
       description,
       contactInfo,
-      assets: [{ content: url, status: "BLOCKED" }],
+      assets: [{ content: url, status: 'BLOCKED' }],
     });
 
     await submissionInteraction.reply({
@@ -108,14 +108,14 @@ export async function execute(interaction: CommandInteraction) {
       ephemeral: true,
     });
   } catch (error) {
-    logger.error(error, "Unable to submit report");
+    logger.error(error, 'Unable to submit report');
 
     if (error instanceof DiscordjsError) {
       throw error;
     }
 
     logger.info(
-      "checking if the reason submission failed is because the asset is already blocked or on the allowlist"
+      'checking if the reason submission failed is because the asset is already blocked or on the allowlist'
     );
 
     try {
@@ -123,7 +123,7 @@ export async function execute(interaction: CommandInteraction) {
         content: urlInput,
       });
 
-      if (assetCheckResponse.status === "BLOCKED") {
+      if (assetCheckResponse.status === 'BLOCKED') {
         logger.info(`url is already blocked (url=${urlInput})`);
         await submissionInteraction.reply({
           content: `⚠️ **This link is already Blocked by ChainPatrol.** No need to report it again.`,
@@ -132,7 +132,7 @@ export async function execute(interaction: CommandInteraction) {
         return;
       }
 
-      if (assetCheckResponse.status === "ALLOWED") {
+      if (assetCheckResponse.status === 'ALLOWED') {
         logger.info(`url is on allowlist (url=${urlInput})`);
         await submissionInteraction.reply({
           content: `⚠️ **This link is on ChainPatrol's Allowlist.** \n\nIf you think this is a mistake, please file a [dispute](https://app.chainpatrol.io/dispute).`,
@@ -141,7 +141,7 @@ export async function execute(interaction: CommandInteraction) {
         return;
       }
     } catch (error) {
-      logger.error(error, "Unable to check asset status (url=%s)", urlInput);
+      logger.error(error, 'Unable to check asset status (url=%s)', urlInput);
 
       if (error instanceof DiscordjsError) {
         throw error;
@@ -159,25 +159,25 @@ function generateModal(
   user: User,
   options: Omit<
     CommandInteractionOptionResolver<CacheType>,
-    "getMessage" | "getFocused"
+    'getMessage' | 'getFocused'
   >,
   guildId: string | null
 ) {
   const usernameWithDiscriminator = `${user.username}#${user.discriminator}`;
-  const url = options.getString("url", true);
+  const url = options.getString('url', true);
 
   const modal = new ModalBuilder()
-    .setCustomId("reportModal")
-    .setTitle("Report Scam Link");
+    .setCustomId('reportModal')
+    .setTitle('Report Scam Link');
 
   const urlInput = new TextInputBuilder()
-    .setCustomId("urlInput")
+    .setCustomId('urlInput')
     // The label is the prompt the user sees for this input
-    .setLabel("Scam link to be reported")
+    .setLabel('Scam link to be reported')
     // Short means only a single line of text
     .setStyle(TextInputStyle.Short)
     .setValue(url)
-    .setPlaceholder("example.com");
+    .setPlaceholder('example.com');
   // An action row only holds one text input,
   // so you need one action row per text input.
   const urlActionRow =
@@ -186,10 +186,10 @@ function generateModal(
     );
 
   const titleInput = new TextInputBuilder()
-    .setCustomId("titleInput")
-    .setLabel("Title")
+    .setCustomId('titleInput')
+    .setLabel('Title')
     .setStyle(TextInputStyle.Short)
-    .setPlaceholder("ex. Phishing Scam on example.com")
+    .setPlaceholder('ex. Phishing Scam on example.com')
     .setValue(`Discord Report: ${url}`);
   const titleActionRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
@@ -197,8 +197,8 @@ function generateModal(
     );
 
   const descriptionInput = new TextInputBuilder()
-    .setCustomId("descriptionInput")
-    .setLabel("Description")
+    .setCustomId('descriptionInput')
+    .setLabel('Description')
     .setRequired(false)
     .setStyle(TextInputStyle.Paragraph)
     .setPlaceholder(`Please explain why you think this is a scam`);
@@ -208,8 +208,8 @@ function generateModal(
     );
 
   const contactInput = new TextInputBuilder()
-    .setCustomId("contactInput")
-    .setLabel("Let us know how to best contact you")
+    .setCustomId('contactInput')
+    .setLabel('Let us know how to best contact you')
     .setRequired(false)
     .setStyle(TextInputStyle.Paragraph)
     .setPlaceholder(

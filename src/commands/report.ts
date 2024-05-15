@@ -55,7 +55,7 @@ export async function execute(interaction: CommandInteraction) {
   try {
     submissionInteraction = await interaction.awaitModalSubmit({
       filter: (i) => i.customId === "reportModal" && i.user.id === user.id,
-      time: 60_000,
+      time: 240_000,
     });
   } catch (error) {
     if (

@@ -1,4 +1,5 @@
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+
 import { AssetType, chainpatrol } from "~/utils/api";
 import { logger } from "~/utils/logger";
 import { defangUrl } from "~/utils/url";
@@ -7,7 +8,7 @@ export const data = new SlashCommandBuilder()
   .setName("check")
   .setDescription("checks a link to see if it's a scam")
   .addStringOption((option) =>
-    option.setName("url").setDescription("The link to check").setRequired(true)
+    option.setName("url").setDescription("The link to check").setRequired(true),
   );
 
 export async function execute(interaction: CommandInteraction) {

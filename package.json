@@ -16,7 +16,6 @@
     "@axiomhq/pino": "^1.0.0-rc.1",
     "@chainpatrol/sdk": "^0.2.2",
     "@sentry/node": "^7.50.0",
-    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
     "glob": "^10.2.3",

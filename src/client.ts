@@ -34,7 +34,7 @@ export class CustomClient extends Client {
    * Load listeners from the listeners folder
    */
   public loadListeners() {
-    const { filteredFiles } = readDirectory("./src/listeners");
+    const { filteredFiles } = readDirectory('./src/listeners');
 
     for (const filePath of filteredFiles) {
       const listener = require(filePath);

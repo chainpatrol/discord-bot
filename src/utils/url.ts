@@ -1,5 +1,5 @@
 export function defangUrl(url: string) {
-  return url.replace(".", "(dot)");
+  return url.replaceAll(".", "(dot)")
 }
 
 export const URL_REGEX = /https?:\/\/(?:www\.)?([^\s]+\.[^\s]+)/gi;

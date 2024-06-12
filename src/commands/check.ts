@@ -1,7 +1,7 @@
-import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import { AssetType, chainpatrol } from "~/utils/api";
-import { logger } from "~/utils/logger";
+import { SlashCommandBuilder } from "discord.js";
+import { chainpatrol } from "~/utils/api";
 import { defangUrl } from "~/utils/url";
+import { CommandContext } from "../types";
 
 export const data = new SlashCommandBuilder()
   .setName("check")
@@ -10,23 +10,25 @@ export const data = new SlashCommandBuilder()
     option.setName("url").setDescription("The link to check").setRequired(true)
   );
 
-export async function execute(interaction: CommandInteraction) {
+export async function execute({ interaction, logger }: CommandContext) {
   if (!interaction.isChatInputCommand()) {
     return;
   }
 
   await interaction.deferReply({ ephemeral: true });
 
-  logger.info(`running check command (user.id=${interaction.user.id})`);
+  logger.info({ user: interaction.user }, "Running check command");
 
   try {
     const { options } = interaction;
     const url = options.getString("url", true);
     const escapedUrl = defangUrl(url);
 
-    logger.info(`checking url (url=${url})`);
+    logger.info({ url, escapedUrl }, "Checking URL using Chainpatrol API");
 
     const response = await chainpatrol.asset.check({ content: url });
+
+    logger.info({ url, response }, "Got response from Chainpatrol API");
 
     if (response.status === "BLOCKED") {
       await interaction.editReply({
@@ -47,10 +49,10 @@ export async function execute(interaction: CommandInteraction) {
     }
   } catch (error) {
     // Handle errors
-    logger.error("error", error);
+    logger.error(error);
 
     await interaction.editReply({
-      content: "Error with checking link",
+      content: "Error with checking link. Please try again later.",
     });
   }
 }

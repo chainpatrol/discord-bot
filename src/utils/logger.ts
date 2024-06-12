@@ -2,7 +2,10 @@ import pino from "pino";
 import { env } from "~/env";
 
 export const logger = pino(
-  { level: env.LOG_LEVEL ?? "info" },
+  {
+    level: env.LOG_LEVEL ?? "info",
+    name: "discord-bot",
+  },
   pino.transport({ targets: getTransportTargets() })
 );
 

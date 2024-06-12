@@ -12,9 +12,7 @@ export default (client: CustomClient) => {
       return;
     }
 
-    logger.info(
-      `received interaction (command=${interaction.commandName}, user.id=${interaction.user.id})`
-    );
+    logger.info({ interaction }, "Received interaction");
 
     const command = client.commands.get(interaction.commandName);
 
@@ -23,8 +21,14 @@ export default (client: CustomClient) => {
       return;
     }
 
+    const interactionLogger = logger.child({
+      command: interaction.commandName,
+      interactionId: interaction.id,
+      userId: interaction.user.id,
+    });
+
     try {
-      await command.execute(interaction);
+      await command.execute({ interaction, logger: interactionLogger });
     } catch (error) {
       logger.error(error);
       Sentry.captureException(error);

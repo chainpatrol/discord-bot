@@ -117,3 +117,10 @@ node_modules
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# vscode files
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json

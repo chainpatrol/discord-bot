@@ -48,7 +48,7 @@ export default (client: CustomClient) => {
           return;
         }
 
-        await interaction.followUp({content, ephemeral: true});
+        await interaction.followUp({ content, ephemeral: true });
       }
     }
   });

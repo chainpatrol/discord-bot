@@ -1,7 +1,7 @@
 import { Events } from "discord.js";
 import { CustomClient } from "~/client";
 import { extractUrls } from "~/utils/url";
-import { AssetType, ChainPatrolApiClient, chainpatrol } from "~/utils/api";
+import { ChainPatrolApiClient, chainpatrol } from "~/utils/api";
 import { Flags, isFlagEnabled } from "~/utils/flags";
 import { logger } from "~/utils/logger";
 

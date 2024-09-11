@@ -7,6 +7,7 @@ import {
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
+
 import { env } from "~/env";
 import { ChainPatrolApiClient } from "~/utils/api";
 import { logger } from "~/utils/logger";
@@ -15,22 +16,22 @@ export const data = new SlashCommandBuilder()
   .setName("setup")
   .setDescription("sets up the bot")
   .setDefaultMemberPermissions(
-    PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild
+    PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild,
   )
   .addSubcommand((subcommand) =>
     subcommand
       .setName("connect")
-      .setDescription("connects the bot to your ChainPatrol organization")
+      .setDescription("connects the bot to your ChainPatrol organization"),
   )
   .addSubcommand((subcommand) =>
     subcommand
       .setName("disconnect")
-      .setDescription("disconnects the bot from your ChainPatrol organization")
+      .setDescription("disconnects the bot from your ChainPatrol organization"),
   )
   .addSubcommand((subcommand) =>
     subcommand
       .setName("status")
-      .setDescription("checks the status of the bot's connection")
+      .setDescription("checks the status of the bot's connection"),
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -41,8 +42,8 @@ export const data = new SlashCommandBuilder()
           .setName("channel")
           .setDescription("The channel to post in")
           .setRequired(true)
-          .addChannelTypes(ChannelType.GuildText)
-      )
+          .addChannelTypes(ChannelType.GuildText),
+      ),
   );
 
 export async function execute(interaction: CommandInteraction) {
@@ -198,9 +199,9 @@ async function status(interaction: CommandInteraction) {
 
   // Check if the bot is connected to the server
   try {
-    const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus(
-      { guildId }
-    );
+    const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
+      guildId,
+    });
 
     if (!connectionStatus) {
       await interaction.editReply({
@@ -209,8 +210,7 @@ async function status(interaction: CommandInteraction) {
       return;
     }
 
-    const { connected, channelId, organizationName, organizationUrl } =
-      connectionStatus;
+    const { connected, channelId, organizationName, organizationUrl } = connectionStatus;
 
     if (!connected) {
       await interaction.editReply({
@@ -258,9 +258,9 @@ async function feed(interaction: CommandInteraction) {
   const channel = interaction.options.getChannel("channel", true);
 
   try {
-    const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus(
-      { guildId }
-    );
+    const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
+      guildId,
+    });
 
     if (!connectionStatus) {
       await interaction.editReply({

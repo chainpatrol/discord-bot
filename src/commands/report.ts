@@ -1,17 +1,18 @@
 import {
   ActionRowBuilder,
+  CacheType,
   CommandInteraction,
+  CommandInteractionOptionResolver,
+  DiscordjsError,
+  DiscordjsErrorCodes,
+  ModalActionRowComponentBuilder,
   ModalBuilder,
   SlashCommandBuilder,
   TextInputBuilder,
   TextInputStyle,
-  ModalActionRowComponentBuilder,
   User,
-  CacheType,
-  CommandInteractionOptionResolver,
-  DiscordjsErrorCodes,
-  DiscordjsError,
 } from "discord.js";
+
 import { chainpatrol } from "~/utils/api";
 import { logger } from "~/utils/logger";
 
@@ -19,10 +20,7 @@ export const data = new SlashCommandBuilder()
   .setName("report")
   .setDescription("reports a scam link to ChainPatrol")
   .addStringOption((option) =>
-    option
-      .setName("url")
-      .setDescription("The scam link to report")
-      .setRequired(true)
+    option.setName("url").setDescription("The scam link to report").setRequired(true),
   );
 
 /**
@@ -48,9 +46,7 @@ export async function execute(interaction: CommandInteraction) {
   await interaction.showModal(modal);
 
   // extract data from modal
-  let submissionInteraction: Awaited<
-    ReturnType<typeof interaction.awaitModalSubmit>
-  >;
+  let submissionInteraction: Awaited<ReturnType<typeof interaction.awaitModalSubmit>>;
 
   try {
     submissionInteraction = await interaction.awaitModalSubmit({
@@ -77,10 +73,8 @@ export async function execute(interaction: CommandInteraction) {
   const escapedUrl = url.replace(".", "(dot)");
 
   const title = submissionInteraction.fields.getTextInputValue("titleInput");
-  const description =
-    submissionInteraction.fields.getTextInputValue("descriptionInput");
-  const contactInfo =
-    submissionInteraction.fields.getTextInputValue("contactInput");
+  const description = submissionInteraction.fields.getTextInputValue("descriptionInput");
+  const contactInfo = submissionInteraction.fields.getTextInputValue("contactInput");
 
   // Getting the Discord user information
   const discordAvatarUrl = user.displayAvatarURL();
@@ -115,7 +109,7 @@ export async function execute(interaction: CommandInteraction) {
     }
 
     logger.info(
-      "checking if the reason submission failed is because the asset is already blocked or on the allowlist"
+      "checking if the reason submission failed is because the asset is already blocked or on the allowlist",
     );
 
     try {
@@ -157,11 +151,8 @@ export async function execute(interaction: CommandInteraction) {
 
 function generateModal(
   user: User,
-  options: Omit<
-    CommandInteractionOptionResolver<CacheType>,
-    "getMessage" | "getFocused"
-  >,
-  guildId: string | null
+  options: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">,
+  guildId: string | null,
 ) {
   const usernameWithDiscriminator = `${user.username}#${user.discriminator}`;
   const url = options.getString("url", true);
@@ -181,9 +172,7 @@ function generateModal(
   // An action row only holds one text input,
   // so you need one action row per text input.
   const urlActionRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      urlInput
-    );
+    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(urlInput);
 
   const titleInput = new TextInputBuilder()
     .setCustomId("titleInput")
@@ -192,9 +181,7 @@ function generateModal(
     .setPlaceholder("ex. Phishing Scam on example.com")
     .setValue(`Discord Report: ${url}`);
   const titleActionRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      titleInput
-    );
+    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(titleInput);
 
   const descriptionInput = new TextInputBuilder()
     .setCustomId("descriptionInput")
@@ -204,7 +191,7 @@ function generateModal(
     .setPlaceholder(`Please explain why you think this is a scam`);
   const descripionActionRow =
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      descriptionInput
+      descriptionInput,
     );
 
   const contactInput = new TextInputBuilder()
@@ -212,20 +199,16 @@ function generateModal(
     .setLabel("Let us know how to best contact you")
     .setRequired(false)
     .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder(
-      `Please provide any additional contact information you may have`
-    );
+    .setPlaceholder(`Please provide any additional contact information you may have`);
   const contactActionRow =
-    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-      contactInput
-    );
+    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(contactInput);
 
   // Add inputs to the modal (maximum 5)
   modal.addComponents(
     urlActionRow,
     titleActionRow,
     descripionActionRow,
-    contactActionRow
+    contactActionRow,
   );
 
   return modal;

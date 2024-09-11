@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-require("dotenv").config();
-
 const envSchema = z.object({
   LOG_LEVEL: z
     .enum(["debug", "info", "warn", "error", "fatal"])

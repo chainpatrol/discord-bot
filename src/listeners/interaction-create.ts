@@ -1,5 +1,5 @@
-import { Events } from "discord.js";
 import * as Sentry from "@sentry/node";
+import { Events } from "discord.js";
 
 import { CustomClient } from "~/client";
 import { logger } from "~/utils/logger";
@@ -13,7 +13,7 @@ export default (client: CustomClient) => {
     }
 
     logger.info(
-      `received interaction (command=${interaction.commandName}, user.id=${interaction.user.id})`
+      `received interaction (command=${interaction.commandName}, user.id=${interaction.user.id})`,
     );
 
     const command = client.commands.get(interaction.commandName);

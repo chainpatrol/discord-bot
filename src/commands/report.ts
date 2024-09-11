@@ -1,23 +1,19 @@
 import {
   ActionRowBuilder,
-  ButtonInteraction,
-  ButtonStyle,
   CacheType,
   CommandInteraction,
   CommandInteractionOptionResolver,
-  ComponentType,
   DiscordjsError,
   DiscordjsErrorCodes,
   ModalActionRowComponentBuilder,
   ModalBuilder,
-  ModalSubmitInteraction,
   SlashCommandBuilder,
   TextInputBuilder,
   TextInputStyle,
   User,
 } from "discord.js";
 
-import { AssetStatus, chainpatrol } from "~/utils/api";
+import { chainpatrol } from "~/utils/api";
 import { logger } from "~/utils/logger";
 
 export const data = new SlashCommandBuilder()
@@ -27,210 +23,130 @@ export const data = new SlashCommandBuilder()
     option.setName("url").setDescription("The scam link to report").setRequired(true),
   );
 
+/**
+ * This function is called when the `/report` command is executed.
+ *
+ * IMPORTANT: This function opens a modal to collect additional information from the user.
+ * It is critical that you call `interaction.showModal` as early as possible in this function
+ * to ensure that the modal is shown to the user before the 3 second timeout.
+ */
 export async function execute(interaction: CommandInteraction) {
-  if (!interaction.isChatInputCommand()) return;
+  if (!interaction.isChatInputCommand()) {
+    return;
+  }
 
   logger.info(`running report command (user.id=${interaction.user.id})`);
 
   const { guildId, user, options } = interaction;
+
   const urlInput = options.getString("url", true);
 
-  await interaction.deferReply({ ephemeral: true });
+  // Show the modal to the user
+  const modal = generateModal(user, options, guildId);
+  await interaction.showModal(modal);
+
+  // extract data from modal
+  let submissionInteraction: Awaited<ReturnType<typeof interaction.awaitModalSubmit>>;
 
   try {
-    const assetStatus = await checkAssetStatus(urlInput);
-
-    if (assetStatus === "BLOCKED") {
-      await interaction.editReply({
-        content: `⚠️ **This link is already Blocked by ChainPatrol.** No need to report it again.\n\nIf you think this is a mistake, please file a [dispute](https://app.chainpatrol.io/dispute).`,
-      });
-      return;
-    }
-
-    if (assetStatus === "ALLOWED") {
-      await interaction.editReply({
-        content: `⚠️ **This link is on ChainPatrol's Allowlist.** \n\nIf you think this is a mistake, please file a [dispute](https://app.chainpatrol.io/dispute).`,
-      });
-      return;
-    }
-
-    const modal = generateModal(user, options, guildId);
-    await interaction.editReply({
-      content: "Please provide additional information about the report.",
-      components: [
-        {
-          type: ComponentType.ActionRow,
-          components: [
-            {
-              type: ComponentType.Button,
-              customId: "open_report_modal",
-              label: "Open Report Form",
-              style: ButtonStyle.Primary,
-            },
-          ],
-        },
-      ],
-    });
-
-    const buttonInteraction = await interaction.channel!.awaitMessageComponent({
-      filter: (i) => i.customId === "open_report_modal" && i.user.id === user.id,
-      time: 5 * 60 * 1000,
-    });
-
-    await buttonInteraction.showModal(modal);
-
-    const modalSubmission = await buttonInteraction.awaitModalSubmit({
+    submissionInteraction = await interaction.awaitModalSubmit({
       filter: (i) => i.customId === "reportModal" && i.user.id === user.id,
-      time: 10 * 60 * 1000,
+      time: 4 * 60 * 1000, // 4 minutes
     });
-
-    const reportData = extractReportData(modalSubmission, user);
-    await showReportConfirmation(modalSubmission, reportData);
   } catch (error) {
-    handleError(interaction, error);
-  }
-}
-
-async function checkAssetStatus(url: string): Promise<AssetStatus> {
-  try {
-    const response = await chainpatrol.asset.check({ content: url });
-    return response.status;
-  } catch (error) {
-    logger.error(error, "Unable to check asset status (url=%s)", url);
+    if (
+      error instanceof Error &&
+      "code" in error &&
+      error.code === DiscordjsErrorCodes.InteractionCollectorError
+    ) {
+      logger.info(`modal timed out (url=${urlInput})`);
+      await interaction.followUp({
+        content: `⚠️ **You took too long to submit the report.** Please try again.`,
+        ephemeral: true,
+      });
+      return;
+    }
     throw error;
   }
-}
 
-function extractReportData(submission: ModalSubmitInteraction, user: User) {
-  const url = submission.fields.getTextInputValue("urlInput");
-  const title = submission.fields.getTextInputValue("titleInput");
-  const description = submission.fields.getTextInputValue("descriptionInput");
-  const contactInfo = submission.fields.getTextInputValue("contactInput");
+  const url = submissionInteraction.fields.getTextInputValue("urlInput");
+  const escapedUrl = url.replace(".", "(dot)");
 
-  return {
-    url,
-    title,
-    description,
-    contactInfo,
-    externalUser: {
-      platform: "discord",
-      platformIdentifier: user.id,
-      avatarUrl: user.displayAvatarURL(),
-      displayName: `${user.username}#${user.discriminator}`,
-    },
+  const title = submissionInteraction.fields.getTextInputValue("titleInput");
+  const description = submissionInteraction.fields.getTextInputValue("descriptionInput");
+  const contactInfo = submissionInteraction.fields.getTextInputValue("contactInput");
+
+  // Getting the Discord user information
+  const discordAvatarUrl = user.displayAvatarURL();
+  const discordPublicUsername = user.username;
+  const discordFormattedUsername = `${user.username}#${user.discriminator}`; // username in "user#1234" format
+  const externalUser = {
+    platform: "discord",
+    platformIdentifier: user.id,
+    avatarUrl: discordAvatarUrl,
+    displayName: discordFormattedUsername,
   };
-}
 
-async function showReportConfirmation(
-  interaction: ModalSubmitInteraction,
-  reportData: any,
-) {
-  const escapedUrl = defangUrl(reportData.url);
-  await interaction.reply({
-    content: `Please review your report for \`${escapedUrl}\`:
-
-**Title:** ${reportData.title}
-**Description:** ${reportData.description}
-**Contact Info:** ${reportData.contactInfo}
-
-Click 'Edit' to modify the report or 'Submit' to send it to ChainPatrol.`,
-    components: [
-      {
-        type: ComponentType.ActionRow,
-        components: [
-          {
-            type: ComponentType.Button,
-            customId: "edit_report",
-            label: "Edit",
-            style: ButtonStyle.Secondary,
-          },
-          {
-            type: ComponentType.Button,
-            customId: "submit_report",
-            label: "Submit",
-            style: ButtonStyle.Primary,
-          },
-        ],
-      },
-    ],
-    ephemeral: true,
-  });
-
-  const buttonInteraction = await interaction.channel!.awaitMessageComponent({
-    filter: (i) =>
-      (i.customId === "edit_report" || i.customId === "submit_report") &&
-      i.user.id === interaction.user.id,
-    time: 10 * 60 * 1000,
-  });
-
-  if (buttonInteraction.customId === "edit_report") {
-    await buttonInteraction.showModal(
-      generateModal(interaction.user, interaction.options, interaction.guildId),
-    );
-    return showReportConfirmation(
-      await buttonInteraction.awaitModalSubmit({
-        filter: (i) => i.customId === "reportModal" && i.user.id === interaction.user.id,
-        time: 10 * 60 * 1000,
-      }),
-      extractReportData(
-        await buttonInteraction.awaitModalSubmit({
-          filter: (i) =>
-            i.customId === "reportModal" && i.user.id === interaction.user.id,
-          time: 10 * 60 * 1000,
-        }),
-        interaction.user,
-      ),
-    );
-  } else {
-    await submitReport(buttonInteraction, reportData);
-  }
-}
-
-async function submitReport(interaction: ButtonInteraction, reportData: any) {
   try {
     const response = await chainpatrol.report.create({
-      discordGuildId: interaction.guildId ?? undefined,
-      externalReporter: reportData.externalUser,
-      title: reportData.title,
-      description: reportData.description,
-      contactInfo: reportData.contactInfo,
-      assets: [{ content: reportData.url, status: "BLOCKED" }],
+      discordGuildId: guildId ?? undefined,
+      externalReporter: externalUser,
+      title,
+      description,
+      contactInfo,
+      assets: [{ content: url, status: "BLOCKED" }],
     });
 
-    await interaction.update({
-      content: `✅ Thanks for submitting a report for \`${defangUrl(reportData.url)}\`! \n\nWe've sent this report to the **${response.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
-      components: [],
+    await submissionInteraction.reply({
+      content: `✅ Thanks for submitting a report for \`${escapedUrl}\` ! \n\nWe've sent this report to the **${response.organization.name}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
+      ephemeral: true,
     });
   } catch (error) {
     logger.error(error, "Unable to submit report");
-    await interaction.update({
-      content: `⚠️ **Something went wrong trying to submit your report.** Please try again later.`,
-      components: [],
-    });
-  }
-}
 
-function handleError(interaction: CommandInteraction, error: unknown) {
-  logger.error(error);
-  if (
-    error instanceof Error &&
-    "code" in error &&
-    error.code === DiscordjsErrorCodes.InteractionCollectorError
-  ) {
-    interaction.followUp({
-      content: `⚠️ **You took too long to respond.** Please try again.`,
-      ephemeral: true,
-    });
-  } else {
-    interaction.followUp({
-      content: `⚠️ **An unexpected error occurred.** Please try again later.`,
-      ephemeral: true,
-    });
-  }
-}
+    if (error instanceof DiscordjsError) {
+      throw error;
+    }
 
-function defangUrl(url: string) {
-  return url.replace(".", "(dot)");
+    logger.info(
+      "checking if the reason submission failed is because the asset is already blocked or on the allowlist",
+    );
+
+    try {
+      const assetCheckResponse = await chainpatrol.asset.check({
+        content: urlInput,
+      });
+
+      if (assetCheckResponse.status === "BLOCKED") {
+        logger.info(`url is already blocked (url=${urlInput})`);
+        await submissionInteraction.reply({
+          content: `⚠️ **This link is already Blocked by ChainPatrol.** No need to report it again.`,
+          ephemeral: true,
+        });
+        return;
+      }
+
+      if (assetCheckResponse.status === "ALLOWED") {
+        logger.info(`url is on allowlist (url=${urlInput})`);
+        await submissionInteraction.reply({
+          content: `⚠️ **This link is on ChainPatrol's Allowlist.** \n\nIf you think this is a mistake, please file a [dispute](https://app.chainpatrol.io/dispute).`,
+          ephemeral: true,
+        });
+        return;
+      }
+    } catch (error) {
+      logger.error(error, "Unable to check asset status (url=%s)", urlInput);
+
+      if (error instanceof DiscordjsError) {
+        throw error;
+      }
+
+      await submissionInteraction.reply({
+        content: `⚠️ **Something went wrong trying to submit your report.** Please try again later.`,
+        ephemeral: true,
+      });
+    }
+  }
 }
 
 function generateModal(

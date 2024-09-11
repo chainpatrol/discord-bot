@@ -1,5 +1,6 @@
-import { Events } from "discord.js";
 import * as Sentry from "@sentry/node";
+import { Events } from "discord.js";
+
 import { CustomClient } from "~/client";
 import { logger } from "~/utils/logger";
 

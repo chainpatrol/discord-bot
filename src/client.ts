@@ -1,5 +1,7 @@
 import { Client, ClientOptions, Collection } from "discord.js";
+
 import { readDirectory } from "~/utils/file";
+
 import { logger } from "./utils/logger";
 
 export class CustomClient extends Client {
@@ -24,7 +26,7 @@ export class CustomClient extends Client {
         this.commands.set(command.data.name, command);
       } else {
         logger.warn(
-          `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`
+          `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
         );
       }
     }
@@ -42,9 +44,7 @@ export class CustomClient extends Client {
       if (listener.default && typeof listener.default === "function") {
         listener.default(this);
       } else {
-        logger.warn(
-          `[WARNING] The listener at ${filePath} is missing a default export.`
-        );
+        logger.warn(`[WARNING] The listener at ${filePath} is missing a default export.`);
       }
     }
   }

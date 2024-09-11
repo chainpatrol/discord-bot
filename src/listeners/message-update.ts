@@ -1,9 +1,10 @@
 import { Events } from "discord.js";
+
 import { CustomClient } from "~/client";
-import { extractUrls } from "~/utils/url";
 import { ChainPatrolApiClient, chainpatrol } from "~/utils/api";
 import { Flags, isFlagEnabled } from "~/utils/flags";
 import { logger } from "~/utils/logger";
+import { extractUrls } from "~/utils/url";
 
 export default (client: CustomClient) => {
   logger.info("MessageUpdate listener loaded.");
@@ -23,9 +24,9 @@ export default (client: CustomClient) => {
       return;
     }
 
-    const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus(
-      { guildId }
-    );
+    const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
+      guildId,
+    });
 
     if (!connectionStatus || !connectionStatus.connected) {
       return;

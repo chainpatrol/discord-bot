@@ -1,8 +1,9 @@
-import { GatewayIntentBits } from "discord.js";
 import * as Sentry from "@sentry/node";
+import { GatewayIntentBits } from "discord.js";
 
 import { CustomClient } from "~/client";
 import { env } from "~/env";
+
 import { logger } from "./utils/logger";
 
 if (env.SENTRY_SECRET) {
@@ -27,7 +28,7 @@ process.on(
   (reason: {} | null | undefined, promise: Promise<any>) => {
     logger.fatal("Unhandled Rejection at:", promise, "reason:", reason);
     Sentry.captureException(reason);
-  }
+  },
 );
 
 process.on("uncaughtException", (err, origin) => {

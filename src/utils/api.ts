@@ -1,5 +1,7 @@
-import { ChainPatrolClient, AssetStatus, AssetType } from "@chainpatrol/sdk";
+import { AssetStatus, AssetType, ChainPatrolClient } from "@chainpatrol/sdk";
+
 import { env } from "~/env";
+
 import { logger } from "./logger";
 
 export type { AssetStatus, AssetType };
@@ -46,7 +48,7 @@ export class ChainPatrolApiClient {
     headers: Record<string, string> = {
       "Content-Type": "application/json",
       "X-API-KEY": env.CHAINPATROL_API_KEY,
-    }
+    },
   ) {
     try {
       const response = await fetch(path, {
@@ -66,13 +68,11 @@ export class ChainPatrolApiClient {
     }
   }
 
-  public static async fetchDiscordGuildStatus(
-    discordGuild: DiscordGuildStatusType
-  ) {
+  public static async fetchDiscordGuildStatus(discordGuild: DiscordGuildStatusType) {
     const checkResponse =
       await ChainPatrolApiClient.postSecure<DiscordGuildStatusResponseType>(
         ChainPatrolApiRoutes.discordGuildStatusUrl(),
-        discordGuild
+        discordGuild,
       );
 
     return checkResponse;

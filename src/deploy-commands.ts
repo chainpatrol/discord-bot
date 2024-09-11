@@ -1,6 +1,8 @@
 import { REST, Routes } from "discord.js";
+
 import { env } from "~/env";
 import { readDirectory } from "~/utils/file";
+
 import { logger } from "./utils/logger";
 
 const clientId = env["DISCORD_APPLICATION_ID"];
@@ -23,9 +25,7 @@ const rest = new REST({ version: "10" }).setToken(token);
 
 // and deploy your commands!
 const deployCommands = async () => {
-  logger.info(
-    `Started refreshing ${commands.length} application (/) commands.`
-  );
+  logger.info(`Started refreshing ${commands.length} application (/) commands.`);
 
   if (deployGlobally) {
     const data = (await rest.put(Routes.applicationCommands(clientId), {
@@ -33,22 +33,22 @@ const deployCommands = async () => {
     })) as any[];
 
     logger.info(
-      `Successfully reloaded ${data.length} application (/) commands across all servers (global).`
+      `Successfully reloaded ${data.length} application (/) commands across all servers (global).`,
     );
   } else if (guildId) {
     // The put method is used to fully refresh all commands in the guild with the current set
     const data = (await rest.put(
       Routes.applicationGuildCommands(clientId, guildId),
-      { body: commands }
+      { body: commands },
       // { body: [] }
     )) as any[];
 
     logger.info(
-      `Successfully reloaded ${data.length} application (/) commands on dev server ${guildId}.`
+      `Successfully reloaded ${data.length} application (/) commands on dev server ${guildId}.`,
     );
   } else {
     throw new Error(
-      "No guild ID provided via TEST_DISCORD_SERVER_ID, and DISCORD_DEPLOY_GLOBAL is false."
+      "No guild ID provided via TEST_DISCORD_SERVER_ID, and DISCORD_DEPLOY_GLOBAL is false.",
     );
   }
 };

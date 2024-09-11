@@ -1,5 +1,5 @@
-import path from "node:path";
 import { globSync } from "glob";
+import path from "node:path";
 
 /**
  * Utilizes globSync to find files in a directory.
@@ -9,10 +9,7 @@ import { globSync } from "glob";
  * @returns An object containing the filtered file paths as an array.
  * @throws {TypeError} if any of the arguments is not a string.
  */
-export function readDirectory(
-  globPath: string,
-  fileExtension: string = "*.ts"
-) {
+export function readDirectory(globPath: string, fileExtension: string = "*.ts") {
   if (globPath[-1] != "/") {
     globPath += "/";
   }

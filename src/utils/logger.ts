@@ -1,14 +1,13 @@
 import pino from "pino";
+
 import { env } from "~/env";
 
 export const logger = pino(
   { level: env.LOG_LEVEL ?? "info" },
-  pino.transport({ targets: getTransportTargets() })
+  pino.transport({ targets: getTransportTargets() }),
 );
 
-function getTransportTargets(): pino.TransportTargetOptions<
-  Record<string, unknown>
->[] {
+function getTransportTargets(): pino.TransportTargetOptions<Record<string, unknown>>[] {
   if (env.NODE_ENV === "production") {
     return [
       {

@@ -1,4 +1,4 @@
-import { globSync } from "glob";
+import { globSync } from "node:fs";
 import path from "node:path";
 
 /**

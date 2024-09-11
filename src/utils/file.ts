@@ -1,5 +1,5 @@
 import path from "node:path";
-import { globSync } from "glob";
+import { globSync } from 'node:fs'
 
 /**
  * Utilizes globSync to find files in a directory.

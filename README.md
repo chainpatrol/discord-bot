@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ChainPatrol's Discord Bot is the official bot for Discord admins to
-enhance their commmunity protection against scams and phishing attempts in their
+enhance their community protection against scams and phishing attempts in their
 servers
 
 [Website](https://chainpatrol.io/bot) | [Documentation](https://chainpatrol.io/docs/general/discord-bot) | [Install](https://chainpatrol.io/bot/install)

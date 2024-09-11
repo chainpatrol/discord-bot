@@ -1,5 +1,5 @@
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import { AssetType, chainpatrol } from "~/utils/api";
+import { chainpatrol } from "~/utils/api";
 import { logger } from "~/utils/logger";
 import { defangUrl } from "~/utils/url";
 

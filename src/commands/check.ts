@@ -31,7 +31,8 @@ export async function execute(interaction: CommandInteraction) {
 
     if (response.status === "BLOCKED") {
       await interaction.editReply({
-        content: `🚨 **Alert** 🚨 \n\nThis link is a scam! \`${escapedUrl}\` \n\n_Please **DO NOT** click on this link._`,
+        content: `🚨 **Alert** 🚨 \n\nThis link is a **scam!** \`${escapedUrl}\` \n\n_Please **DO NOT** click on this link._
+        \nFile a dispute [here](https://app.chainpatrol.io/dispute).`,
       });
     } else if (response.status === "ALLOWED") {
       await interaction.editReply({

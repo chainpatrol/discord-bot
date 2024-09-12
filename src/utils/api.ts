@@ -78,3 +78,35 @@ export class ChainPatrolApiClient {
     return checkResponse;
   }
 }
+
+export async function getReportsForOrg(input: {
+  organizationSlug: string;
+  assetContents: string[];
+}): Promise<{ reports: Report[] }> {
+  if (!input.organizationSlug) {
+    input.organizationSlug = "chainpatrol";
+  }
+
+  const response = await chainpatrol.fetch<{ reports: Report[] }>({
+    method: "POST",
+    path: ["v2", "internal", "reports", "search"],
+    body: input,
+  });
+  return response;
+}
+
+export async function getDiscordGuildStatus(
+  guildId: string,
+): Promise<DiscordGuildStatusResponseType | null> {
+  try {
+    const response = await chainpatrol.fetch<DiscordGuildStatusResponseType>({
+      method: "POST",
+      path: ["v2", "internal", "getDiscordGuildStatus"],
+      body: { guildId },
+    });
+    return response;
+  } catch (error) {
+    logger.error(error, "Unable to fetch Discord guild status");
+    return null;
+  }
+}

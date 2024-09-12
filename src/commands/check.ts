@@ -39,7 +39,7 @@ export async function execute(interaction: CommandInteraction) {
       });
     } else if (response.status === "UNKNOWN") {
       await interaction.editReply({
-        content: `⚠️ **Warning** ⚠️ \n\nThis link is not currently in our database: \`${escapedUrl}\` \n\n_Please be careful and **DO NOT** click on this link unless you are sure it's safe._`,
+        content: `⚠️ **Warning** ⚠️ \n\nThis link is not currently in our blocklist or allowlist: \`${escapedUrl}\` \n\n_Please be careful and **DO NOT** click on this link unless you are sure it's safe._`,
       });
     } else {
       await interaction.editReply({

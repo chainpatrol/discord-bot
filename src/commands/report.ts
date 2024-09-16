@@ -5,7 +5,7 @@ import {
   CacheType,
   CommandInteraction,
   CommandInteractionOptionResolver,
-  DiscordjsError,
+  DiscordAPIError,
   DiscordjsErrorCodes,
   ModalActionRowComponentBuilder,
   ModalBuilder,
@@ -15,6 +15,7 @@ import {
   User,
 } from "discord.js";
 
+import { inspectDisputeButtons } from "~/helpers/buttons";
 import { chainpatrol, getDiscordGuildStatus, getReportsForOrg } from "~/utils/api";
 import { logger } from "~/utils/logger";
 import { defangUrl } from "~/utils/url";
@@ -25,14 +26,6 @@ export const data = new SlashCommandBuilder()
   .addStringOption((option) =>
     option.setName("url").setDescription("The scam link to report").setRequired(true),
   );
-
-/**
- * This function is called when the `/report` command is executed.
- *
- * IMPORTANT: This function opens a modal to collect additional information from the user.
- * It is critical that you call `interaction.showModal` as early as possible in this function
- * to ensure that the modal is shown to the user before the 3 second timeout.
- */
 
 export async function execute(interaction: CommandInteraction) {
   if (!interaction.isChatInputCommand()) return;
@@ -51,14 +44,16 @@ export async function execute(interaction: CommandInteraction) {
       await interaction.reply({
         content: `⚠️ **This link, \`${defangUrl(urlInput)}\`, is already Blocked by ChainPatrol.** No need to report it again.`,
         ephemeral: true,
+        components: [inspectDisputeButtons(urlInput)],
       });
       return;
     }
 
     if (assetCheckResponse.status === "ALLOWED") {
       await interaction.reply({
-        content: `⚠️ **This link, \`${defangUrl(urlInput)}\`, is on ChainPatrol's Allowlist.** \n\nIf you think this is a mistake, please file a [dispute](https://app.chainpatrol.io/dispute).`,
+        content: `⚠️ **This link, \`${defangUrl(urlInput)}\`, is on ChainPatrol's Allowlist.**`,
         ephemeral: true,
+        components: [inspectDisputeButtons(urlInput)],
       });
       return;
     }
@@ -79,11 +74,22 @@ export async function execute(interaction: CommandInteraction) {
         });
         return;
       }
-
-      // If no existing reports, continue with the original flow
     }
   } catch (error) {
-    logger.error(error, "Unable to check asset status (url=%s)", urlInput);
+    if (error instanceof DiscordAPIError) {
+      logger.error(
+        error,
+        "Discord API error while checking asset status (url=%s)",
+        urlInput,
+      );
+      throw error;
+    }
+
+    await interaction.reply({
+      content: `⚠️ **Something went wrong while checking the status of this link, \`${defangUrl(urlInput)}\`.**`,
+      ephemeral: true,
+    });
+    return;
   }
 
   // Show the modal to the user
@@ -104,31 +110,39 @@ export async function execute(interaction: CommandInteraction) {
       submissionInteraction.fields.getTextInputValue("descriptionInput");
     const contactInfo = submissionInteraction.fields.getTextInputValue("contactInput");
 
-    // Create buttons
-    const editButton = new ButtonBuilder()
-      .setCustomId("edit_report")
-      .setLabel("Edit")
+    const cancelButton = new ButtonBuilder()
+      .setCustomId("cancel_report")
+      .setLabel("Cancel")
       .setStyle(ButtonStyle.Secondary);
 
     const submitButton = new ButtonBuilder()
       .setCustomId("submit_report")
-      .setLabel("Submit")
+      .setLabel("Submit Report")
       .setStyle(ButtonStyle.Primary);
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      editButton,
+      cancelButton,
       submitButton,
     );
 
     // Show ephemeral message with content from the modal and buttons
     const reply = await submissionInteraction.reply({
-      content: `Please review your report for \`${escapedUrl}\`:
-      
-Title: \`${title}\`
-Description: \`${description}\`
-Contact Info: \`${contactInfo}\`
+      content: `# Report for ${escapedUrl}
 
-Click "Edit" to make changes or "Submit" to send the report.`,
+## Asset
+
+- ${escapedUrl} | 🔴 Blocked 
+
+## Description
+
+${description}
+
+## Contact
+
+${contactInfo}
+
+Does this information look correct?
+Double-check that all the details you provided are accurate.`,
       components: [row],
       ephemeral: true,
       fetchReply: true,
@@ -138,16 +152,16 @@ Click "Edit" to make changes or "Submit" to send the report.`,
     const collector = reply.createMessageComponentCollector({
       filter: (i) =>
         i.user.id === user.id &&
-        (i.customId === "edit_report" || i.customId === "submit_report"),
+        (i.customId === "cancel_report" || i.customId === "submit_report"),
       time: 5 * 60 * 1000, // 5 minutes
     });
 
     collector.on("collect", async (buttonInteraction) => {
-      if (buttonInteraction.customId === "edit_report") {
-        // Re-open the modal
-        await buttonInteraction.showModal(
-          generateModal(user, options, guildId, { url, title, description, contactInfo }),
-        );
+      if (buttonInteraction.customId === "cancel_report") {
+        await buttonInteraction.update({
+          content: `Report cancelled for ${escapedUrl}`,
+          components: [],
+        });
         collector.stop();
       } else if (buttonInteraction.customId === "submit_report") {
         // Submit report to API
@@ -212,9 +226,14 @@ function generateModal(
   user: User,
   options: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">,
   guildId: string | null,
-  prefill?: { url: string; title: string; description: string; contactInfo: string },
+  defaultValues?: {
+    url: string;
+    title: string;
+    description: string;
+    contactInfo: string;
+  },
 ) {
-  const url = prefill?.url || options.getString("url", true);
+  const url = defaultValues?.url || options.getString("url", true);
 
   const modal = new ModalBuilder()
     .setCustomId("reportModal")
@@ -232,7 +251,7 @@ function generateModal(
     .setLabel("Title")
     .setStyle(TextInputStyle.Short)
     .setPlaceholder("ex. Phishing Scam on example.com")
-    .setValue(prefill?.title || `Discord Report: ${url}`);
+    .setValue(defaultValues?.title || `Discord Report: ${url}`);
 
   const descriptionInput = new TextInputBuilder()
     .setCustomId("descriptionInput")
@@ -240,7 +259,7 @@ function generateModal(
     .setRequired(false)
     .setStyle(TextInputStyle.Paragraph)
     .setPlaceholder(`Please explain why you think this is a scam`)
-    .setValue(prefill?.description || "");
+    .setValue(defaultValues?.description || "");
 
   const contactInput = new TextInputBuilder()
     .setCustomId("contactInput")
@@ -248,7 +267,7 @@ function generateModal(
     .setRequired(false)
     .setStyle(TextInputStyle.Paragraph)
     .setPlaceholder(`Please provide any additional contact information you may have`)
-    .setValue(prefill?.contactInfo || "");
+    .setValue(defaultValues?.contactInfo || "");
 
   modal.addComponents(
     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(urlInput),

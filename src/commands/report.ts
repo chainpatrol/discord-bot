@@ -153,7 +153,7 @@ Double-check that all the details you provided are accurate.`,
       filter: (i) =>
         i.user.id === user.id &&
         (i.customId === "cancel_report" || i.customId === "submit_report"),
-      time: 5 * 60 * 1000, // 5 minutes
+      time: 5 * 60 * 1000,
     });
 
     collector.on("collect", async (buttonInteraction) => {

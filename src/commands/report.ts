@@ -7,6 +7,7 @@ import {
   CommandInteractionOptionResolver,
   DiscordAPIError,
   DiscordjsErrorCodes,
+  EmbedBuilder,
   ModalActionRowComponentBuilder,
   ModalBuilder,
   SlashCommandBuilder,
@@ -118,31 +119,38 @@ export async function execute(interaction: CommandInteraction) {
     const submitButton = new ButtonBuilder()
       .setCustomId("submit_report")
       .setLabel("Submit Report")
-      .setStyle(ButtonStyle.Primary);
+      .setStyle(ButtonStyle.Success)
+      .setEmoji("🚀");
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       cancelButton,
       submitButton,
     );
 
+    const reportEmbed = new EmbedBuilder()
+      .setColor(0xff0000)
+      .setTitle(`Report for ${escapedUrl}`)
+      .addFields(
+        { name: "Asset", value: `${escapedUrl} | 🔴 Blocked`, inline: false },
+        {
+          name: "Description",
+          value: description || "No description provided.",
+          inline: false,
+        },
+        {
+          name: "Contact",
+          value: contactInfo || "No contact information provided.",
+          inline: false,
+        },
+      )
+      .setFooter({
+        text: "Does this information look correct? Double-check that all the details you provided are accurate.",
+      });
+
     // Show ephemeral message with content from the modal and buttons
     const reply = await submissionInteraction.reply({
-      content: `# Report for ${escapedUrl}
-
-## Asset
-
-- ${escapedUrl} | 🔴 Blocked 
-
-## Description
-
-${description}
-
-## Contact
-
-${contactInfo}
-
-Does this information look correct?
-Double-check that all the details you provided are accurate.`,
+      content: "Please review your report:",
+      embeds: [reportEmbed],
       components: [row],
       ephemeral: true,
       fetchReply: true,
@@ -160,6 +168,7 @@ Double-check that all the details you provided are accurate.`,
       if (buttonInteraction.customId === "cancel_report") {
         await buttonInteraction.update({
           content: `Report cancelled for ${escapedUrl}`,
+          embeds: [],
           components: [],
         });
         collector.stop();
@@ -182,14 +191,17 @@ Double-check that all the details you provided are accurate.`,
             assets: [{ content: url, status: "BLOCKED" }],
           });
 
+          const reportUrl = `https://app.chainpatrol.io/reports/${response.id}`;
           await buttonInteraction.update({
-            content: `✅ Thanks for submitting a report for \`${escapedUrl}\`! \n\nWe've sent this report to the **${response.organization?.name ?? "ChainPatrol"}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nThanks for doing your part in making this space safer 🚀`,
+            content: `✅ Thanks for submitting a report for \`${escapedUrl}\`! \n\nWe've sent this report to the **${response.organization?.name ?? "ChainPatrol"}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nYou can view your report here: ${reportUrl}\n\nThanks for doing your part in making this space safer 🚀`,
+            embeds: [],
             components: [],
           });
         } catch (error) {
           logger.error(error, "Unable to submit report");
           await buttonInteraction.update({
-            content: `⚠️ **Something went wrong trying to submit your report.** Please try again later.`,
+            content: `⚠️ Something went wrong trying to submit your report. Please try again later.`,
+            embeds: [],
             components: [],
           });
         }

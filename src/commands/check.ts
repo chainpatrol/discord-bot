@@ -32,7 +32,7 @@ export async function execute(interaction: CommandInteraction) {
 
     if (response.status === "BLOCKED") {
       await interaction.editReply({
-        content: `🚨 **Alert** 🚨 \n\nThis link is a **scam!** \`${escapedUrl}\` \n\n_Please **DO NOT** click on this link._`,
+        content: `🚨 Alert 🚨 \n\nThis link is a scam! \`${escapedUrl}\` \n\nPlease DO NOT click on this link.`,
         components: [inspectDisputeButtons(url)],
       });
     } else if (response.status === "ALLOWED") {
@@ -42,7 +42,7 @@ export async function execute(interaction: CommandInteraction) {
       });
     } else if (response.status === "UNKNOWN") {
       await interaction.editReply({
-        content: `⚠️ **Warning** ⚠️ \n\nThis link is not currently in our blocklist or allowlist: \`${escapedUrl}\` \n\n_Please be careful and **DO NOT** click on this link unless you are sure it's safe._`,
+        content: `⚠️ Warning ⚠️ \n\nThis link is not currently in our blocklist or allowlist: \`${escapedUrl}\` \n\nPlease be careful and DO NOT click on this link unless you are sure it's safe.`,
       });
     } else {
       await interaction.editReply({

@@ -173,7 +173,6 @@ export async function execute(interaction: CommandInteraction) {
         });
         collector.stop();
       } else if (buttonInteraction.customId === "submit_report") {
-        // Defer the update to give us more time
         await buttonInteraction.deferUpdate();
 
         // Submit report to API

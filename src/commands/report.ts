@@ -173,6 +173,8 @@ export async function execute(interaction: CommandInteraction) {
         });
         collector.stop();
       } else if (buttonInteraction.customId === "submit_report") {
+        await buttonInteraction.deferUpdate();
+
         // Submit report to API
         const externalUser = {
           platform: "discord",
@@ -190,19 +192,25 @@ export async function execute(interaction: CommandInteraction) {
             contactInfo,
             assets: [{ content: url, status: "BLOCKED" }],
           });
-
+          logger.info(
+            response,
+            `report submitted (reportId=${response.id}, url=${escapedUrl})`,
+          );
           const reportUrl = `https://app.chainpatrol.io/reports/${response.id}`;
-          await buttonInteraction.update({
+
+          await buttonInteraction.followUp({
             content: `✅ Thanks for submitting a report for \`${escapedUrl}\`! \n\nWe've sent this report to the **${response.organization?.name ?? "ChainPatrol"}** team and **ChainPatrol** to conduct a review. Once approved the report will be sent out to wallets to block.\n\nYou can view your report here: ${reportUrl}\n\nThanks for doing your part in making this space safer 🚀`,
-            embeds: [],
+            ephemeral: true,
+          });
+
+          await buttonInteraction.editReply({
             components: [],
           });
         } catch (error) {
-          logger.error(error, "Unable to submit report");
-          await buttonInteraction.update({
+          logger.error(error, "An error occurred while executing the report command");
+          await buttonInteraction.followUp({
             content: `⚠️ Something went wrong trying to submit your report. Please try again later.`,
-            embeds: [],
-            components: [],
+            ephemeral: true,
           });
         }
         collector.stop();

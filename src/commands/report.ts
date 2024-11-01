@@ -19,6 +19,7 @@ import {
 import { inspectDisputeButtons } from "~/helpers/buttons";
 import { chainpatrol, getDiscordGuildStatus, getReportsForOrg } from "~/utils/api";
 import { logger } from "~/utils/logger";
+import { posthog } from "~/utils/posthog";
 import { defangUrl } from "~/utils/url";
 
 export const data = new SlashCommandBuilder()
@@ -29,6 +30,11 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: CommandInteraction) {
+  posthog.capture({
+    distinctId: interaction.guildId ?? "no-guild",
+    event: "report_command",
+  });
+
   if (!interaction.isChatInputCommand()) return;
 
   logger.info(`running report command (user.id=${interaction.user.id})`);

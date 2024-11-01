@@ -11,6 +11,7 @@ import {
 import { env } from "~/env";
 import { ChainPatrolApiClient } from "~/utils/api";
 import { logger } from "~/utils/logger";
+import { posthog } from "~/utils/posthog";
 
 export const data = new SlashCommandBuilder()
   .setName("setup")
@@ -191,6 +192,11 @@ async function disconnect(interaction: CommandInteraction) {
 }
 
 async function status(interaction: CommandInteraction) {
+  posthog.capture({
+    distinctId: interaction.guildId ?? "no-guild",
+    event: "setup_status_command",
+  });
+
   const guildId = interaction.guildId;
 
   if (!guildId) {

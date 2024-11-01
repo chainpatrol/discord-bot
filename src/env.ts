@@ -15,6 +15,7 @@ const envSchema = z.object({
   SENTRY_SECRET: z.string().optional(),
   AXIOM_DATASET: z.string().optional(),
   AXIOM_TOKEN: z.string().optional(),
+  POSTHOG_API_KEY: z.string(),
 });
 
 const result = envSchema.safeParse(process.env);

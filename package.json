@@ -16,7 +16,7 @@
   "dependencies": {
     "@axiomhq/pino": "^1.0.0-rc.1",
     "@chainpatrol/sdk": "^0.4.1",
-    "@sentry/node": "^7.50.0",
+    "@sentry/node": "^9.6.1",
     "discord.js": "^14.7.1",
     "pino": "^8.17.2",
     "pino-pretty": "^10.3.1",

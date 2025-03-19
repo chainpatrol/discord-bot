@@ -38,4 +38,4 @@ to read through our issues and submit a pull request.
 
 ---
 
-©️ MIT 2023 ChainPatrol
+©️ MIT 2025 ChainPatrol

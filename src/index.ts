@@ -9,7 +9,6 @@ import { logger } from "./utils/logger";
 if (env.SENTRY_SECRET) {
   Sentry.init({
     dsn: env.SENTRY_SECRET,
-    enableTracing: true,
     tracesSampleRate: 0.01,
   });
 }

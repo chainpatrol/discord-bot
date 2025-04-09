@@ -1,4 +1,10 @@
-import { Events } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+  Events,
+} from "discord.js";
 
 import { CustomClient } from "~/client";
 import { ChainPatrolApiClient, chainpatrol } from "~/utils/api";
@@ -15,6 +21,7 @@ export default (client: CustomClient) => {
     }
 
     const guildId = interaction.guildId;
+    const channelId = interaction.channelId;
 
     if (!guildId) {
       return;
@@ -30,7 +37,32 @@ export default (client: CustomClient) => {
 
     const slug = connectionStatus.organizationSlug;
 
-    if (!isFlagEnabled(slug, Flags.REACT_TO_SUSPICIOUS_MESSAGES)) {
+    const discordConfig = await chainpatrol.fetch<{
+      config: {
+        id: number;
+        organizationId: number;
+        isMonitoringLinks: boolean;
+        moderatorUsernames: string[];
+        guildId: string;
+        feedChannelId: string | null;
+        isFeedEnabled: boolean;
+        responseAction: "REACTION" | "NOTIFY";
+        moderatorChannelId: string | null;
+      } | null;
+    }>({
+      method: "POST",
+      path: ["v2", "internal", "getDiscordConfig"],
+      body: { guildId },
+    });
+
+    if (!discordConfig?.config?.isMonitoringLinks) {
+      return;
+    }
+
+    if (
+      discordConfig.config.feedChannelId &&
+      discordConfig.config.feedChannelId !== channelId
+    ) {
       return;
     }
 
@@ -47,7 +79,43 @@ export default (client: CustomClient) => {
         content: url,
       });
       if (response.status === "BLOCKED") {
-        await interaction.react("🚨");
+        if (discordConfig.config.responseAction === "REACTION") {
+          await interaction.react("🚨");
+        } else if (
+          discordConfig.config.responseAction === "NOTIFY" &&
+          discordConfig.config.moderatorChannelId
+        ) {
+          const moderatorChannel = await interaction.guild?.channels.fetch(
+            discordConfig.config.moderatorChannelId,
+          );
+          if (moderatorChannel?.isTextBased()) {
+            const messageLink = `https://discord.com/channels/${guildId}/${channelId}/${interaction.id}`;
+
+            const embed = new EmbedBuilder()
+              .setColor(0xff0000)
+              .setTitle("⚠️ Suspicious Link Detected")
+              .setDescription(
+                `A potentially harmful link was detected in <#${channelId}>`,
+              )
+              .addFields(
+                { name: "Link", value: `\`${url}\`` },
+                { name: "Posted by", value: `<@${interaction.author.id}>` },
+              )
+              .setTimestamp();
+
+            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+              new ButtonBuilder()
+                .setLabel("Jump to Message")
+                .setStyle(ButtonStyle.Link)
+                .setURL(messageLink),
+            );
+
+            await moderatorChannel.send({
+              embeds: [embed],
+              components: [row],
+            });
+          }
+        }
         return;
       }
     }

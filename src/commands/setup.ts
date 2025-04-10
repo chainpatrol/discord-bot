@@ -1,4 +1,6 @@
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
   ButtonStyle,
   ChannelType,
   CommandInteraction,
@@ -9,7 +11,7 @@ import {
 } from "discord.js";
 
 import { env } from "~/env";
-import { ChainPatrolApiClient } from "~/utils/api";
+import { ChainPatrolApiClient, chainpatrol } from "~/utils/api";
 import { logger } from "~/utils/logger";
 import { posthog } from "~/utils/posthog";
 
@@ -32,7 +34,9 @@ export const data = new SlashCommandBuilder()
   .addSubcommand((subcommand) =>
     subcommand
       .setName("status")
-      .setDescription("checks the status of the bot's connection"),
+      .setDescription(
+        "checks the status of the bot's connection and info about the current channel",
+      ),
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -45,63 +49,172 @@ export const data = new SlashCommandBuilder()
           .setRequired(true)
           .addChannelTypes(ChannelType.GuildText),
       ),
+  )
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName("linkmonitoring")
+      .setDescription("sets up link monitoring in the current channel"),
   );
 
 export async function execute(interaction: CommandInteraction) {
-  if (!interaction.isChatInputCommand()) {
-    return;
-  }
+  posthog.capture({
+    distinctId: interaction.guildId ?? "no-guild",
+    event: "setup_command",
+  });
 
-  // Only allow the command to be run in a server
+  if (!interaction.isChatInputCommand()) return;
+
+  const { options } = interaction;
+
+  switch (options.getSubcommand()) {
+    case "connect":
+      await handleConnect(interaction);
+      break;
+    case "disconnect":
+      await handleDisconnect(interaction);
+      break;
+    case "status":
+      await handleStatus(interaction);
+      break;
+    case "feed":
+      await handleFeed(interaction);
+      break;
+    case "linkmonitoring":
+      await handleLinkMonitoring(interaction);
+      break;
+  }
+}
+
+async function handleLinkMonitoring(interaction: CommandInteraction) {
   if (!interaction.guildId) {
     await interaction.reply({
+      content: "This command can only be used in a server.",
       ephemeral: true,
-      content: "This command can only be run in a server",
     });
     return;
   }
 
-  // Only allow admins to run the command
-  if (!interaction.memberPermissions?.has("Administrator")) {
+  if (!interaction.channel) {
     await interaction.reply({
+      content: "Could not find the current channel.",
       ephemeral: true,
-      content: "You must be an administrator to run this command",
+    });
+    return;
+  }
+
+  // Check if user has Administrator or Manage Guild permissions
+  if (
+    !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) &&
+    !interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)
+  ) {
+    await interaction.reply({
+      content:
+        "❌ You need Administrator or Manage Server permissions to set up link monitoring.",
+      ephemeral: true,
+    });
+    return;
+  }
+
+  try {
+    const currentConfig = await chainpatrol.fetch<{
+      config: {
+        monitoredChannels: string[];
+      } | null;
+    }>({
+      method: "POST",
+      path: ["v2", "internal", "getDiscordConfig"],
+      body: { guildId: interaction.guildId },
+    });
+
+    const currentChannels = currentConfig?.config?.monitoredChannels || [];
+    if (currentChannels.includes(interaction.channelId)) {
+      await interaction.reply({
+        content: "❌ This channel is already being monitored.",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    const yesButton = new ButtonBuilder()
+      .setCustomId("confirm_monitoring")
+      .setLabel("Yes")
+      .setStyle(ButtonStyle.Success);
+
+    const noButton = new ButtonBuilder()
+      .setCustomId("cancel_monitoring")
+      .setLabel("No")
+      .setStyle(ButtonStyle.Danger);
+
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(yesButton, noButton);
+
+    const response = await interaction.reply({
+      content:
+        "Would you like ChainPatrol to monitor this channel for suspicious links and messages across our blocklist and security network?",
+      components: [row],
+      fetchReply: true,
+      ephemeral: true,
+    });
+
+    const collector = response.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: 60000,
+    });
+
+    collector.on("collect", async (i) => {
+      if (i.customId === "confirm_monitoring") {
+        await chainpatrol.fetch({
+          method: "POST",
+          path: ["v2", "internal", "updateDiscordConfig"],
+          body: {
+            guildId: interaction.guildId,
+            monitoredChannels: [...currentChannels, interaction.channelId],
+          },
+        });
+
+        await i.update({
+          content:
+            "✅ Channel monitoring has been enabled. ChainPatrol will now monitor this channel for suspicious links and messages.",
+          components: [],
+        });
+      } else {
+        await i.update({
+          content: "❌ Channel monitoring setup cancelled.",
+          components: [],
+        });
+      }
+    });
+
+    collector.on("end", async (collected) => {
+      if (collected.size === 0) {
+        await interaction.editReply({
+          content: "❌ Channel monitoring setup timed out. Please try again.",
+          components: [],
+        });
+      }
+    });
+  } catch (error) {
+    logger.error("Error setting up link monitoring:", error);
+    await interaction.reply({
+      content:
+        "❌ There was an error setting up link monitoring. Please try again later.",
+      ephemeral: true,
+    });
+  }
+}
+
+async function handleConnect(interaction: CommandInteraction) {
+  const guildId = interaction.guildId;
+
+  if (!guildId) {
+    await interaction.reply({
+      content: "This command can only be used in a server.",
+      ephemeral: true,
     });
     return;
   }
 
   await interaction.deferReply({ ephemeral: true });
 
-  const { options } = interaction;
-  const subcommand = options.getSubcommand(true);
-
-  try {
-    if (subcommand === "connect") {
-      await connect(interaction);
-    } else if (subcommand === "disconnect") {
-      await disconnect(interaction);
-    } else if (subcommand === "status") {
-      await status(interaction);
-    } else if (subcommand === "feed") {
-      await feed(interaction);
-    }
-  } catch (error) {
-    // Handle errors
-    logger.error("error", error);
-    await interaction.editReply({
-      content: "Error running setup command",
-    });
-  }
-}
-
-async function connect(interaction: CommandInteraction) {
-  const guildId = interaction.guildId;
-
-  if (!guildId) {
-    return;
-  }
-
-  // Check if the bot is already connected to the server
   const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
     guildId,
   });
@@ -123,7 +236,6 @@ async function connect(interaction: CommandInteraction) {
     return;
   }
 
-  // Display a button to open the ChainPatrol login page
   await interaction.editReply({
     content:
       "Click the button below to connect your ChainPatrol organization. After connecting, you can run `/setup status` to check the status of the bot's connection",
@@ -143,14 +255,19 @@ async function connect(interaction: CommandInteraction) {
   });
 }
 
-async function disconnect(interaction: CommandInteraction) {
+async function handleDisconnect(interaction: CommandInteraction) {
   const guildId = interaction.guildId;
 
   if (!guildId) {
+    await interaction.reply({
+      content: "This command can only be used in a server.",
+      ephemeral: true,
+    });
     return;
   }
 
-  // Check if the bot is connected to the server
+  await interaction.deferReply({ ephemeral: true });
+
   const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
     guildId,
   });
@@ -171,7 +288,6 @@ async function disconnect(interaction: CommandInteraction) {
     return;
   }
 
-  // Display a button to open the ChainPatrol disconnect page
   await interaction.editReply({
     content:
       "Click the button below to disconnect your ChainPatrol organization. After disconnecting, you can run `/setup status` to check the status of the bot's connection",
@@ -191,91 +307,100 @@ async function disconnect(interaction: CommandInteraction) {
   });
 }
 
-async function status(interaction: CommandInteraction) {
-  posthog.capture({
-    distinctId: interaction.guildId ?? "no-guild",
-    event: "setup_status_command",
-  });
-
-  const guildId = interaction.guildId;
-
-  if (!guildId) {
+async function handleStatus(interaction: CommandInteraction) {
+  if (!interaction.guildId) {
+    await interaction.reply({
+      content: "This command can only be used in a server.",
+      ephemeral: true,
+    });
     return;
   }
 
-  // Check if the bot is connected to the server
+  await interaction.deferReply({ ephemeral: true });
+
   try {
-    const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
-      guildId,
+    const response = await ChainPatrolApiClient.fetchDiscordGuildStatus({
+      guildId: interaction.guildId,
     });
 
-    if (!connectionStatus) {
-      await interaction.editReply({
-        content: "Error checking bot status",
+    if (response?.connected) {
+      const discordConfig = await chainpatrol.fetch<{
+        config: {
+          id: number;
+          organizationId: number;
+          isMonitoringLinks: boolean;
+          moderatorUsernames: string[];
+          guildId: string;
+          feedChannelId: string | null;
+          isFeedEnabled: boolean;
+          responseAction: "REACTION" | "NOTIFY";
+          moderatorChannelId: string | null;
+          monitoredChannels: string[];
+        } | null;
+      }>({
+        method: "POST",
+        path: ["v2", "internal", "getDiscordConfig"],
+        body: { guildId: interaction.guildId },
       });
-      return;
-    }
 
-    const { connected, channelId, organizationName, organizationUrl } = connectionStatus;
+      const currentChannelId = interaction.channelId;
+      const isMonitoredChannel =
+        discordConfig?.config?.monitoredChannels?.includes(currentChannelId);
+      const isModeratorChannel =
+        discordConfig?.config?.moderatorChannelId === currentChannelId;
 
-    if (!connected) {
+      let channelStatus = "";
+      if (isMonitoredChannel) {
+        channelStatus += "🔍 This channel is actively monitored for links.\n";
+      }
+      if (isModeratorChannel) {
+        channelStatus += "👮 This channel is set as the moderator channel.\n";
+      }
+
       await interaction.editReply({
-        content:
-          "❌ The bot is not connected to any organization on ChainPatrol. Run `/setup connect` to connect the bot to your organization",
+        content: `✅ This server is connected to ChainPatrol.\nOrganization: ${response.organizationName}\n\n${channelStatus}`,
       });
-      return;
-    }
-
-    let channel: GuildBasedChannel | null = null;
-
-    if (channelId && interaction.guild) {
-      channel = await interaction.guild.channels.fetch(channelId);
-    }
-
-    if (!channel) {
+    } else {
       await interaction.editReply({
-        content: `✅ The bot is connected to [${organizationName}](${organizationUrl}) on ChainPatrol`,
+        content: "❌ This server is not connected to ChainPatrol.",
       });
-      return;
     }
-
+  } catch (error) {
+    logger.error("Error checking ChainPatrol status:", error);
     await interaction.editReply({
-      content: `✅ The bot is connected to [${organizationName}](${organizationUrl}) on ChainPatrol and is posting alerts to <#${channelId}>`,
-    });
-  } catch (e) {
-    logger.error("error", e);
-    await interaction.editReply({
-      content: "Error checking bot status",
+      content:
+        "❌ There was an error checking the ChainPatrol status. Please try again later.",
     });
   }
 }
 
-async function feed(interaction: CommandInteraction) {
-  const guildId = interaction.guildId;
-
-  if (!guildId) {
+async function handleFeed(interaction: CommandInteraction) {
+  if (!interaction.guildId) {
+    await interaction.reply({
+      content: "This command can only be used in a server.",
+      ephemeral: true,
+    });
     return;
   }
 
-  if (!interaction.isChatInputCommand()) {
+  const channel = interaction.options.get("channel", true).channel as GuildBasedChannel;
+
+  if (!channel.isTextBased()) {
+    await interaction.reply({
+      content: "Please select a text channel.",
+      ephemeral: true,
+    });
     return;
   }
 
-  const channel = interaction.options.getChannel("channel", true);
+  await interaction.deferReply({ ephemeral: true });
 
   try {
     const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
-      guildId,
+      guildId: interaction.guildId,
     });
 
-    if (!connectionStatus) {
-      await interaction.editReply({
-        content: "Error checking bot status",
-      });
-      return;
-    }
-
-    if (!connectionStatus.connected) {
+    if (!connectionStatus?.connected) {
       await interaction.editReply({
         content:
           "❌ The bot is not connected to any organization on ChainPatrol. Run `/setup connect` to connect the bot to your organization",
@@ -283,7 +408,6 @@ async function feed(interaction: CommandInteraction) {
       return;
     }
 
-    // Display a button to open the ChainPatrol connect feed page
     await interaction.editReply({
       content:
         "Click the button below to connect your ChainPatrol organization to this channel. After connecting, you can run `/setup status` to check the status of the bot's connection",
@@ -295,16 +419,16 @@ async function feed(interaction: CommandInteraction) {
               type: ComponentType.Button,
               style: ButtonStyle.Link,
               label: "Connect Feed",
-              url: `${env.CHAINPATROL_API_URL}/admin/connect-feed/discord?guildId=${guildId}&channelId=${channel.id}&channelName=${channel.name}`,
+              url: `${env.CHAINPATROL_API_URL}/admin/connect-feed/discord?guildId=${interaction.guildId}&channelId=${channel.id}&channelName=${channel.name}`,
             },
           ],
         },
       ],
     });
-  } catch (e) {
-    logger.error("error", e);
+  } catch (error) {
+    logger.error("Error setting feed channel:", error);
     await interaction.editReply({
-      content: "Error setting up feed",
+      content: "❌ There was an error setting the feed channel. Please try again later.",
     });
   }
 }

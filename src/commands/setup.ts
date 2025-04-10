@@ -34,7 +34,9 @@ export const data = new SlashCommandBuilder()
   .addSubcommand((subcommand) =>
     subcommand
       .setName("status")
-      .setDescription("checks the status of the bot's connection"),
+      .setDescription(
+        "checks the status of the bot's connection and info about the current channel",
+      ),
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -255,7 +257,9 @@ async function handleConnect(interaction: CommandInteraction) {
 }
 
 async function handleDisconnect(interaction: CommandInteraction) {
-  if (!interaction.guildId) {
+  const guildId = interaction.guildId;
+
+  if (!guildId) {
     await interaction.reply({
       content: "This command can only be used in a server.",
       ephemeral: true,
@@ -265,29 +269,43 @@ async function handleDisconnect(interaction: CommandInteraction) {
 
   await interaction.deferReply({ ephemeral: true });
 
-  try {
-    const response = await ChainPatrolApiClient.fetchDiscordGuildStatus({
-      guildId: interaction.guildId,
-    });
+  const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
+    guildId,
+  });
 
-    if (!response?.connected) {
-      await interaction.editReply({
-        content: "This server is not connected to ChainPatrol.",
-      });
-      return;
-    }
-
-    // TODO: Implement disconnection logic
+  if (!connectionStatus) {
     await interaction.editReply({
-      content: "✅ Server disconnected from ChainPatrol successfully!",
+      content: "Error checking bot status",
     });
-  } catch (error) {
-    logger.error("Error disconnecting from ChainPatrol:", error);
-    await interaction.editReply({
-      content:
-        "❌ There was an error disconnecting from ChainPatrol. Please try again later.",
-    });
+    return;
   }
+
+  const { connected } = connectionStatus;
+
+  if (!connected) {
+    await interaction.editReply({
+      content: "The bot is not connected to any organization on ChainPatrol",
+    });
+    return;
+  }
+
+  await interaction.editReply({
+    content:
+      "Click the button below to disconnect your ChainPatrol organization. After disconnecting, you can run `/setup status` to check the status of the bot's connection",
+    components: [
+      {
+        type: ComponentType.ActionRow,
+        components: [
+          {
+            type: ComponentType.Button,
+            style: ButtonStyle.Link,
+            label: "Disconnect",
+            url: `${env.CHAINPATROL_API_URL}/admin/disconnect/discord?guildId=${guildId}`,
+          },
+        ],
+      },
+    ],
+  });
 }
 
 async function handleStatus(interaction: CommandInteraction) {

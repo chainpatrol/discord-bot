@@ -224,9 +224,9 @@ async function handleConnect(interaction: CommandInteraction) {
       return;
     }
 
-    // TODO: Implement connection logic
     await interaction.editReply({
-      content: "✅ Server connected to ChainPatrol successfully!",
+      content:
+        "Please visit https://app.chainpatrol.io/admin to connect your server to ChainPatrol.",
     });
   } catch (error) {
     logger.error("Error connecting to ChainPatrol:", error);

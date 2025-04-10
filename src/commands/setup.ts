@@ -104,10 +104,8 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
 
   // Check if user has Administrator or Manage Guild permissions
   if (
-    !interaction.memberPermissions?.has([
-      PermissionFlagsBits.Administrator,
-      PermissionFlagsBits.ManageGuild,
-    ])
+    !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) &&
+    !interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)
   ) {
     await interaction.reply({
       content:

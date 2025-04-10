@@ -10,7 +10,6 @@ import {
 
 import { CustomClient } from "~/client";
 import { ChainPatrolApiClient, chainpatrol } from "~/utils/api";
-import { Flags, isFlagEnabled } from "~/utils/flags";
 import { logger } from "~/utils/logger";
 import { extractUrls } from "~/utils/url";
 
@@ -23,7 +22,7 @@ interface DiscordConfig {
     guildId: string;
     feedChannelId: string | null;
     isFeedEnabled: boolean;
-    responseAction: "REACTION" | "NOTIFY";
+    responseAction: "REACTION" | "NOTIFY" | "DELETE";
     moderatorChannelId: string | null;
   } | null;
 }
@@ -66,22 +65,27 @@ const handleBlockedUrl = async (
 ) => {
   if (!config) return;
 
-  if (config.responseAction === "REACTION") {
-    await message.react("🚨");
-    return;
-  }
-
-  if (config.responseAction === "NOTIFY" && config.moderatorChannelId) {
-    const moderatorChannel = await message.guild?.channels.fetch(
-      config.moderatorChannelId,
-    );
-    if (moderatorChannel?.isTextBased()) {
-      const { embed, row } = createNotificationEmbed(message, url);
-      await moderatorChannel.send({
-        embeds: [embed],
-        components: [row],
-      });
-    }
+  switch (config.responseAction) {
+    case "REACTION":
+      await message.react("🚨");
+      break;
+    case "DELETE":
+      await message.delete();
+      break;
+    case "NOTIFY":
+      if (config.moderatorChannelId) {
+        const moderatorChannel = await message.guild?.channels.fetch(
+          config.moderatorChannelId,
+        );
+        if (moderatorChannel?.isTextBased()) {
+          const { embed, row } = createNotificationEmbed(message, url);
+          await moderatorChannel.send({
+            embeds: [embed],
+            components: [row],
+          });
+        }
+      }
+      break;
   }
 };
 

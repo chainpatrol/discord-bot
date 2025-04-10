@@ -202,7 +202,9 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
 }
 
 async function handleConnect(interaction: CommandInteraction) {
-  if (!interaction.guildId) {
+  const guildId = interaction.guildId;
+
+  if (!guildId) {
     await interaction.reply({
       content: "This command can only be used in a server.",
       ephemeral: true,
@@ -212,28 +214,44 @@ async function handleConnect(interaction: CommandInteraction) {
 
   await interaction.deferReply({ ephemeral: true });
 
-  try {
-    const response = await ChainPatrolApiClient.fetchDiscordGuildStatus({
-      guildId: interaction.guildId,
+  const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
+    guildId,
+  });
+
+  if (!connectionStatus) {
+    await interaction.editReply({
+      content: "Error checking bot status",
     });
+    return;
+  }
 
-    if (response?.connected) {
-      await interaction.editReply({
-        content: "This server is already connected to ChainPatrol.",
-      });
-      return;
-    }
+  const { connected } = connectionStatus;
 
+  if (connected) {
     await interaction.editReply({
       content:
-        "Please visit https://app.chainpatrol.io/admin to connect your server to ChainPatrol.",
+        "The bot is already connected to an organization on ChainPatrol. Run `/setup disconnect` to disconnect the bot from your organization if you're an admin",
     });
-  } catch (error) {
-    logger.error("Error connecting to ChainPatrol:", error);
-    await interaction.editReply({
-      content: "❌ There was an error connecting to ChainPatrol. Please try again later.",
-    });
+    return;
   }
+
+  await interaction.editReply({
+    content:
+      "Click the button below to connect your ChainPatrol organization. After connecting, you can run `/setup status` to check the status of the bot's connection",
+    components: [
+      {
+        type: ComponentType.ActionRow,
+        components: [
+          {
+            type: ComponentType.Button,
+            style: ButtonStyle.Link,
+            label: "Connect",
+            url: `${env.CHAINPATROL_API_URL}/admin/connect/discord?guildId=${guildId}`,
+          },
+        ],
+      },
+    ],
+  });
 }
 
 async function handleDisconnect(interaction: CommandInteraction) {

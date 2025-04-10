@@ -398,9 +398,34 @@ async function handleFeed(interaction: CommandInteraction) {
   await interaction.deferReply({ ephemeral: true });
 
   try {
-    // TODO: Implement feed channel update logic
+    const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
+      guildId: interaction.guildId,
+    });
+
+    if (!connectionStatus?.connected) {
+      await interaction.editReply({
+        content:
+          "❌ The bot is not connected to any organization on ChainPatrol. Run `/setup connect` to connect the bot to your organization",
+      });
+      return;
+    }
+
     await interaction.editReply({
-      content: `✅ Feed channel set to ${channel.toString()} successfully!`,
+      content:
+        "Click the button below to connect your ChainPatrol organization to this channel. After connecting, you can run `/setup status` to check the status of the bot's connection",
+      components: [
+        {
+          type: ComponentType.ActionRow,
+          components: [
+            {
+              type: ComponentType.Button,
+              style: ButtonStyle.Link,
+              label: "Connect Feed",
+              url: `${env.CHAINPATROL_API_URL}/admin/connect-feed/discord?guildId=${interaction.guildId}&channelId=${channel.id}&channelName=${channel.name}`,
+            },
+          ],
+        },
+      ],
     });
   } catch (error) {
     logger.error("Error setting feed channel:", error);

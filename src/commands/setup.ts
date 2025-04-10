@@ -153,6 +153,7 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
       content:
         "Would you like ChainPatrol to monitor this channel for suspicious links and messages across our blocklist and security network?",
       components: [row],
+      fetchReply: true,
       ephemeral: true,
     });
 

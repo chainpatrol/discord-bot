@@ -24,6 +24,7 @@ interface DiscordConfig {
     isFeedEnabled: boolean;
     responseAction: "REACTION" | "NOTIFY" | "DELETE";
     moderatorChannelId: string | null;
+    monitoredChannels: string[];
   } | null;
 }
 
@@ -95,7 +96,11 @@ const isValidMessage = (message: Message): boolean => {
 
 const isValidConfig = (config: DiscordConfig["config"], channelId: string): boolean => {
   if (!config?.isMonitoringLinks) return false;
-  if (config.feedChannelId && config.feedChannelId !== channelId) return false;
+  if (
+    config.monitoredChannels.length > 0 &&
+    !config.monitoredChannels.includes(channelId)
+  )
+    return false;
   return true;
 };
 

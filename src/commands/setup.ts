@@ -119,6 +119,7 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
     const currentConfig = await chainpatrol.fetch<{
       config: {
         monitoredChannels: string[];
+        isMonitoringLinks: boolean;
       } | null;
     }>({
       method: "POST",
@@ -127,6 +128,72 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
     });
 
     const currentChannels = currentConfig?.config?.monitoredChannels || [];
+    const isMonitoringAllChannels =
+      currentConfig?.config?.isMonitoringLinks && currentChannels.length === 0;
+
+    if (isMonitoringAllChannels) {
+      const yesButton = new ButtonBuilder()
+        .setCustomId("confirm_specific_monitoring")
+        .setLabel("Yes")
+        .setStyle(ButtonStyle.Success);
+
+      const noButton = new ButtonBuilder()
+        .setCustomId("cancel_monitoring")
+        .setLabel("No")
+        .setStyle(ButtonStyle.Danger);
+
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        yesButton,
+        noButton,
+      );
+
+      const response = await interaction.reply({
+        content:
+          "Currently monitoring all channels. Would you like to switch to monitoring only this specific channel instead?",
+        components: [row],
+        ephemeral: true,
+      });
+
+      const collector = response.createMessageComponentCollector({
+        componentType: ComponentType.Button,
+        time: 60000,
+      });
+
+      collector.on("collect", async (i) => {
+        if (i.customId === "confirm_specific_monitoring") {
+          await chainpatrol.fetch({
+            method: "POST",
+            path: ["v2", "internal", "updateDiscordConfig"],
+            body: {
+              guildId: interaction.guildId,
+              monitoredChannels: [interaction.channelId],
+            },
+          });
+
+          await i.update({
+            content:
+              "✅ Switched to monitoring only this channel. ChainPatrol will now monitor this channel for suspicious links and messages.",
+            components: [],
+          });
+        } else {
+          await i.update({
+            content: "❌ Channel monitoring setup cancelled.",
+            components: [],
+          });
+        }
+      });
+
+      collector.on("end", async (collected) => {
+        if (collected.size === 0) {
+          await interaction.editReply({
+            content: "❌ Channel monitoring setup timed out. Please try again.",
+            components: [],
+          });
+        }
+      });
+      return;
+    }
+
     if (currentChannels.includes(interaction.channelId)) {
       await interaction.reply({
         content: "❌ This channel is already being monitored.",
@@ -151,7 +218,6 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
       content:
         "Would you like ChainPatrol to monitor this channel for suspicious links and messages across our blocklist and security network?",
       components: [row],
-      fetchReply: true,
       ephemeral: true,
     });
 
@@ -344,13 +410,18 @@ async function handleStatus(interaction: CommandInteraction) {
       });
 
       const currentChannelId = interaction.channelId;
+      const monitoredChannels = discordConfig?.config?.monitoredChannels || [];
+      const isMonitoringAllChannels =
+        discordConfig?.config?.isMonitoringLinks && monitoredChannels.length === 0;
       const isMonitoredChannel =
-        discordConfig?.config?.monitoredChannels?.includes(currentChannelId);
+        isMonitoringAllChannels || monitoredChannels.includes(currentChannelId);
       const isModeratorChannel =
         discordConfig?.config?.moderatorChannelId === currentChannelId;
 
       let channelStatus = "";
-      if (isMonitoredChannel) {
+      if (isMonitoringAllChannels) {
+        channelStatus += "🔍 All channels are being monitored for links.\n";
+      } else if (isMonitoredChannel) {
         channelStatus += "🔍 This channel is actively monitored for links.\n";
       }
       if (isModeratorChannel) {

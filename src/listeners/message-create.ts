@@ -11,6 +11,7 @@ import {
 import { CustomClient } from "~/client";
 import { ChainPatrolApiClient, chainpatrol } from "~/utils/api";
 import { logger } from "~/utils/logger";
+import { posthog } from "~/utils/posthog";
 import { extractUrls } from "~/utils/url";
 
 interface DiscordConfig {
@@ -110,6 +111,16 @@ export default (client: CustomClient) => {
   client.on(Events.MessageCreate, async (message) => {
     if (!isValidMessage(message)) return;
 
+    posthog.capture({
+      distinctId: message.guildId!,
+      event: "message_processed",
+      properties: {
+        guildId: message.guildId,
+        channelId: message.channelId,
+        userId: message.author.id,
+      },
+    });
+
     const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
       guildId: message.guildId!,
     });
@@ -122,9 +133,30 @@ export default (client: CustomClient) => {
     const possibleUrls = extractUrls(message.content);
     if (!possibleUrls) return;
 
+    posthog.capture({
+      distinctId: message.guildId!,
+      event: "link_checked",
+      properties: {
+        guildId: message.guildId,
+        channelId: message.channelId,
+        userId: message.author.id,
+        linkCount: possibleUrls.length,
+      },
+    });
+
     for (const url of possibleUrls) {
       const response = await chainpatrol.asset.check({ content: url });
       if (response.status === "BLOCKED") {
+        posthog.capture({
+          distinctId: message.guildId!,
+          event: "link_blocked",
+          properties: {
+            guildId: message.guildId,
+            channelId: message.channelId,
+            userId: message.author.id,
+            url: url,
+          },
+        });
         await handleBlockedUrl(message, url, discordConfig.config);
         return;
       }

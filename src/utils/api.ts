@@ -19,9 +19,11 @@ export type DiscordGuildStatusResponseType = {
   connected: boolean;
   guildId?: string;
   channelId?: string;
-  organizationName: string;
-  organizationUrl: string;
-  organizationSlug: string;
+  organizationName?: string;
+  organizationUrl?: string;
+  organizationSlug?: string;
+  isFeedEnabled?: boolean;
+  isMonitoringLinks?: boolean;
 };
 
 enum ChainPatrolApiUri {

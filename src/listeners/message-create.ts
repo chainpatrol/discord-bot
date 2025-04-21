@@ -26,6 +26,7 @@ interface DiscordConfig {
     responseAction: "REACTION" | "NOTIFY" | "DELETE";
     moderatorChannelId: string | null;
     monitoredChannels: string[];
+    excludedChannels?: string[];
   } | null;
 }
 
@@ -95,13 +96,17 @@ const isValidMessage = (message: Message): boolean => {
   return !message.author.bot && !!message.guildId;
 };
 
-const isValidConfig = (config: DiscordConfig["config"], channelId: string): boolean => {
+const shouldMonitorChannel = (
+  config: DiscordConfig["config"],
+  channelId: string,
+): boolean => {
   if (!config?.isMonitoringLinks) return false;
   if (
     config.monitoredChannels.length > 0 &&
     !config.monitoredChannels.includes(channelId)
   )
     return false;
+  if (config.excludedChannels?.includes(channelId)) return false;
   return true;
 };
 
@@ -128,7 +133,7 @@ export default (client: CustomClient) => {
     if (!connectionStatus?.connected) return;
 
     const discordConfig = await fetchDiscordConfig(message.guildId!);
-    if (!isValidConfig(discordConfig.config, message.channelId)) return;
+    if (!shouldMonitorChannel(discordConfig.config, message.channelId)) return;
 
     const possibleUrls = extractUrls(message.content);
     if (!possibleUrls) return;

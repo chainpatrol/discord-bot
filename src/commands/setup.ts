@@ -54,6 +54,11 @@ export const data = new SlashCommandBuilder()
     subcommand
       .setName("linkmonitoring")
       .setDescription("sets up link monitoring in the current channel"),
+  )
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName("ignore")
+      .setDescription("ignores the current channel from link monitoring"),
   );
 
 export async function execute(interaction: CommandInteraction) {
@@ -81,6 +86,9 @@ export async function execute(interaction: CommandInteraction) {
       break;
     case "linkmonitoring":
       await handleLinkMonitoring(interaction);
+      break;
+    case "ignore":
+      await handleIgnore(interaction);
       break;
   }
 }
@@ -195,9 +203,66 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
     }
 
     if (currentChannels.includes(interaction.channelId)) {
-      await interaction.reply({
-        content: "❌ This channel is already being monitored.",
+      const yesButton = new ButtonBuilder()
+        .setCustomId("confirm_remove_monitoring")
+        .setLabel("Yes")
+        .setStyle(ButtonStyle.Success);
+
+      const noButton = new ButtonBuilder()
+        .setCustomId("cancel_remove_monitoring")
+        .setLabel("No")
+        .setStyle(ButtonStyle.Danger);
+
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        yesButton,
+        noButton,
+      );
+
+      const response = await interaction.reply({
+        content:
+          "This channel is currently being monitored. Would you like to **remove** it from monitoring?",
+        components: [row],
         ephemeral: true,
+      });
+
+      const collector = response.createMessageComponentCollector({
+        componentType: ComponentType.Button,
+        time: 60000,
+      });
+
+      collector.on("collect", async (i) => {
+        if (i.customId === "confirm_remove_monitoring") {
+          await chainpatrol.fetch({
+            method: "POST",
+            path: ["v2", "internal", "updateDiscordConfig"],
+            body: {
+              guildId: interaction.guildId,
+              monitoredChannels: currentChannels.filter(
+                (id) => id !== interaction.channelId,
+              ),
+            },
+          });
+
+          await i.update({
+            content:
+              "✅ Channel has been removed from monitoring. ChainPatrol will no longer monitor this channel for suspicious links and messages.",
+            components: [],
+          });
+        } else {
+          await i.update({
+            content: "❌ Channel monitoring removal cancelled.",
+            components: [],
+          });
+        }
+      });
+
+      collector.on("end", async (collected) => {
+        if (collected.size === 0) {
+          await interaction.editReply({
+            content: "❌ Channel monitoring removal timed out. Please try again.",
+            components: [],
+          });
+        }
       });
       return;
     }
@@ -500,6 +565,138 @@ async function handleFeed(interaction: CommandInteraction) {
     logger.error("Error setting feed channel:", error);
     await interaction.editReply({
       content: "❌ There was an error setting the feed channel. Please try again later.",
+    });
+  }
+}
+
+async function handleIgnore(interaction: CommandInteraction) {
+  if (!interaction.guildId) {
+    await interaction.reply({
+      content: "This command can only be used in a server.",
+      ephemeral: true,
+    });
+    return;
+  }
+
+  if (!interaction.channel) {
+    await interaction.reply({
+      content: "Could not find the current channel.",
+      ephemeral: true,
+    });
+    return;
+  }
+
+  // Check if user has Administrator or Manage Guild permissions
+  if (
+    !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) &&
+    !interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)
+  ) {
+    await interaction.reply({
+      content:
+        "❌ You need Administrator or Manage Server permissions to ignore channels.",
+      ephemeral: true,
+    });
+    return;
+  }
+
+  try {
+    const currentConfig = await chainpatrol.fetch<{
+      config: {
+        excludedChannels: string[];
+        monitoredChannels: string[];
+        isMonitoringLinks: boolean;
+      } | null;
+    }>({
+      method: "POST",
+      path: ["v2", "internal", "getDiscordConfig"],
+      body: { guildId: interaction.guildId },
+    });
+
+    const currentExcludedChannels = currentConfig?.config?.excludedChannels || [];
+    const currentMonitoredChannels = currentConfig?.config?.monitoredChannels || [];
+    const isMonitoringAllChannels =
+      currentConfig?.config?.isMonitoringLinks && currentMonitoredChannels.length === 0;
+
+    if (currentExcludedChannels.includes(interaction.channelId)) {
+      await interaction.reply({
+        content: "❌ This channel is already being ignored.",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    if (
+      isMonitoringAllChannels ||
+      currentMonitoredChannels.includes(interaction.channelId)
+    ) {
+      await interaction.reply({
+        content:
+          "❌ This channel is currently being monitored. Please remove it from monitoring first using `/setup linkmonitoring`.",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    const yesButton = new ButtonBuilder()
+      .setCustomId("confirm_ignore")
+      .setLabel("Yes")
+      .setStyle(ButtonStyle.Success);
+
+    const noButton = new ButtonBuilder()
+      .setCustomId("cancel_ignore")
+      .setLabel("No")
+      .setStyle(ButtonStyle.Danger);
+
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(yesButton, noButton);
+
+    const response = await interaction.reply({
+      content: "Would you like ChainPatrol to ignore this channel from link monitoring?",
+      components: [row],
+      ephemeral: true,
+    });
+
+    const collector = response.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: 60000,
+    });
+
+    collector.on("collect", async (i) => {
+      if (i.customId === "confirm_ignore") {
+        await chainpatrol.fetch({
+          method: "POST",
+          path: ["v2", "internal", "updateDiscordConfig"],
+          body: {
+            guildId: interaction.guildId,
+            excludedChannels: [...currentExcludedChannels, interaction.channelId],
+          },
+        });
+
+        await i.update({
+          content:
+            "✅ Channel has been ignored. ChainPatrol will no longer monitor this channel for suspicious links and messages.",
+          components: [],
+        });
+      } else {
+        await i.update({
+          content: "❌ Channel ignore setup cancelled.",
+          components: [],
+        });
+      }
+    });
+
+    collector.on("end", async (collected) => {
+      if (collected.size === 0) {
+        await interaction.editReply({
+          content: "❌ Channel ignore setup timed out. Please try again.",
+          components: [],
+        });
+      }
+    });
+  } catch (error) {
+    logger.error("Error setting up channel ignore:", error);
+    await interaction.reply({
+      content: "❌ There was an error setting up channel ignore. Please try again later.",
+      ephemeral: true,
     });
   }
 }

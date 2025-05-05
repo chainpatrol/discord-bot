@@ -16,6 +16,7 @@ const envSchema = z.object({
   AXIOM_DATASET: z.string().optional(),
   AXIOM_TOKEN: z.string().optional(),
   POSTHOG_API_KEY: z.string(),
+  PORT: z.coerce.number().optional().default(3232),
 });
 
 const result = envSchema.safeParse(process.env);

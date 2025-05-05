@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/node";
 import { GatewayIntentBits } from "discord.js";
+import http from "http";
 
 import { CustomClient } from "~/client";
 import { env } from "~/env";
@@ -39,6 +40,26 @@ process.on("uncaughtException", (err, origin) => {
 // Load commands and listeners
 client.loadCommands();
 client.loadListeners();
+
+const healthCheckServer = http.createServer((req, res) => {
+  if (req.url === "/health" && req.method === "GET") {
+    const isReady = client.isReady();
+    res.writeHead(isReady ? 200 : 503, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        status: isReady ? "ok" : "not ready",
+        uptime: process.uptime(),
+      }),
+    );
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
+});
+
+healthCheckServer.listen(env.PORT, () => {
+  console.log(`Healthcheck server running on http://localhost:${env.PORT}/health`);
+});
 
 // Log in to Discord with your client's token
 client.login(env.DISCORD_BOT_SECRET);

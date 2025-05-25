@@ -13,8 +13,6 @@ const envSchema = z.object({
   TEST_DISCORD_SERVER_ID: z.string().optional(),
   DISCORD_DEPLOY_GLOBAL: z.coerce.boolean().optional().default(false),
   SENTRY_SECRET: z.string().optional(),
-  AXIOM_DATASET: z.string().optional(),
-  AXIOM_TOKEN: z.string().optional(),
   POSTHOG_API_KEY: z.string(),
   PORT: z.coerce.number().optional().default(3232),
 });

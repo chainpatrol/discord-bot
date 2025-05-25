@@ -17,14 +17,6 @@ function getTransportTargets(): pino.TransportTargetOptions<Record<string, unkno
           colorize: true,
         },
       },
-      {
-        level: "info",
-        target: "@axiomhq/pino",
-        options: {
-          dataset: env.AXIOM_DATASET,
-          token: env.AXIOM_TOKEN,
-        },
-      },
     ];
   }
 

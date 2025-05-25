@@ -5,26 +5,6 @@ __metadata:
   version: 6
   cacheKey: 8
 
-"@axiomhq/js@npm:1.0.0-rc.1":
-  version: 1.0.0-rc.1
-  resolution: "@axiomhq/js@npm:1.0.0-rc.1"
-  dependencies:
-    fetch-retry: ^5.0.3
-    uuid: ^8.3.2
-  checksum: 232ec108d9d66dffe1d0a6bc2261606f85e474af42d8c262653c7a72ddfc2042650830cfa6cae6bc16cd94d00d22c087d9ba6aeabd4c98e7ead13d4487834f1e
-  languageName: node
-  linkType: hard
-
-"@axiomhq/pino@npm:^1.0.0-rc.1":
-  version: 1.0.0-rc.1
-  resolution: "@axiomhq/pino@npm:1.0.0-rc.1"
-  dependencies:
-    "@axiomhq/js": 1.0.0-rc.1
-    pino-abstract-transport: ^1.0.0
-  checksum: 2b0ae8ff26d31cfa56b673b8f30554476b3621cceafb854939975748b45f674049b7a7aa309347fd5107fc78b317b6a299cff6d98a2f275df88199b309186326
-  languageName: node
-  linkType: hard
-
 "@babel/code-frame@npm:^7.22.13, @babel/code-frame@npm:^7.24.7":
   version: 7.24.7
   resolution: "@babel/code-frame@npm:7.24.7"
@@ -186,7 +166,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@chainpatrol/discord-bot@workspace:."
   dependencies:
-    "@axiomhq/pino": ^1.0.0-rc.1
     "@chainpatrol/sdk": ^0.4.1
     "@sentry/node": ^9.6.1
     "@trivago/prettier-plugin-sort-imports": ^4.3.0
@@ -1758,13 +1737,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fetch-retry@npm:^5.0.3":
-  version: 5.0.6
-  resolution: "fetch-retry@npm:5.0.6"
-  checksum: 4ad8bca6ec7a7b1212e636bb422a9ae8bb9dce38df0b441c9eb77a29af99b368029d6248ff69427da67e3d43c53808b121135ea395e7fe4f8f383e0ad65b4f27
-  languageName: node
-  linkType: hard
-
 "file-type@npm:^18.2.1":
   version: 18.3.0
   resolution: "file-type@npm:18.3.0"
@@ -3241,15 +3213,6 @@ __metadata:
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
   checksum: 474acf1146cb2701fe3b074892217553dfcf9a031280919ba1b8d651a068c9b15d863b7303cb15bd00a862b498e6cf4ad7b4a08fb134edd5a6f7641681cb54a2
-  languageName: node
-  linkType: hard
-
-"uuid@npm:^8.3.2":
-  version: 8.3.2
-  resolution: "uuid@npm:8.3.2"
-  bin:
-    uuid: dist/bin/uuid
-  checksum: 5575a8a75c13120e2f10e6ddc801b2c7ed7d8f3c8ac22c7ed0c7b2ba6383ec0abda88c905085d630e251719e0777045ae3236f04c812184b7c765f63a70e58df
   languageName: node
   linkType: hard
 

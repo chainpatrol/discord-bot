@@ -34,6 +34,10 @@ export default (client: CustomClient) => {
 
     const slug = connectionStatus.organizationSlug;
 
+    if (!slug) {
+      return;
+    }
+
     if (!isFlagEnabled(slug, Flags.REACT_TO_SUSPICIOUS_MESSAGES)) {
       return;
     }

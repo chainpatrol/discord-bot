@@ -10,7 +10,7 @@ ChainPatrol's Discord Bot is the official bot for Discord admins to
 enhance their community protection against scams and phishing attempts in their
 servers
 
-[Website](https://chainpatrol.io/bot) | [Documentation](https://chainpatrol.io/docs/general/discord-bot) | [Install](https://chainpatrol.io/bot/install)
+[Website](https://chainpatrol.com/bot) | [Documentation](https://chainpatrol.com/docs/general/discord-bot) | [Install](https://chainpatrol.com/bot/install)
 
 </div>
 

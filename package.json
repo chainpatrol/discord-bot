@@ -15,6 +15,7 @@
   "license": "MIT",
   "dependencies": {
     "@chainpatrol/sdk": "^0.4.1",
+    "@logtail/pino": "^0.5.5",
     "@sentry/node": "^9.6.1",
     "discord.js": "^14.7.1",
     "pino": "^8.17.2",

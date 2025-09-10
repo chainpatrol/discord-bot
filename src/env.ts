@@ -15,6 +15,8 @@ const envSchema = z.object({
   SENTRY_SECRET: z.string().optional(),
   POSTHOG_API_KEY: z.string(),
   PORT: z.coerce.number().optional().default(3232),
+  BETTERSTACK_SOURCE_TOKEN: z.string(),
+  BETTERSTACK_INGESTING_HOST: z.string().optional(),
 });
 
 const result = envSchema.safeParse(process.env);

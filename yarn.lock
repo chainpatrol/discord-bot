@@ -167,6 +167,7 @@ __metadata:
   resolution: "@chainpatrol/discord-bot@workspace:."
   dependencies:
     "@chainpatrol/sdk": ^0.4.1
+    "@logtail/pino": ^0.5.5
     "@sentry/node": ^9.6.1
     "@trivago/prettier-plugin-sort-imports": ^4.3.0
     "@types/node": ^22.5.4
@@ -489,6 +490,67 @@ __metadata:
     "@jridgewell/resolve-uri": ^3.1.0
     "@jridgewell/sourcemap-codec": ^1.4.14
   checksum: 9d3c40d225e139987b50c48988f8717a54a8c994d8a948ee42e1412e08988761d0754d7d10b803061cc3aebf35f92a5dbbab493bd0e1a9ef9e89a2130e83ba34
+  languageName: node
+  linkType: hard
+
+"@logtail/core@npm:^0.5.6":
+  version: 0.5.6
+  resolution: "@logtail/core@npm:0.5.6"
+  dependencies:
+    "@logtail/tools": ^0.5.6
+    "@logtail/types": ^0.5.6
+    serialize-error: 8.1.0
+  checksum: 51877a4bd6c84bde78a638052cb437bf5fa354588ab99b850ae25362a4b6617a5c9b593e01aab8a4ec056dee60aba9565103430a4dd8b4492680790a2743f7fe
+  languageName: node
+  linkType: hard
+
+"@logtail/node@npm:^0.5.6":
+  version: 0.5.6
+  resolution: "@logtail/node@npm:0.5.6"
+  dependencies:
+    "@logtail/core": ^0.5.6
+    "@logtail/types": ^0.5.6
+    "@msgpack/msgpack": ^2.5.1
+    "@types/stack-trace": ^0.0.33
+    minimatch: ^9.0.5
+    stack-trace: 0.0.10
+  checksum: fc7003d8f89dccf8c73a5aeb13825c1a8fdff5df370d21a0483242cfcbc9c329af35ae9a97c91adb830dc6c96a558f8d230fe0a57bd604ad9a2a46f597d1722e
+  languageName: node
+  linkType: hard
+
+"@logtail/pino@npm:^0.5.5":
+  version: 0.5.6
+  resolution: "@logtail/pino@npm:0.5.6"
+  dependencies:
+    "@logtail/node": ^0.5.6
+    "@logtail/types": ^0.5.6
+    pino-abstract-transport: ^1.0.0
+  peerDependencies:
+    pino: ^7.0.0 || ^8.0.0 || ^9.0.0
+  checksum: 27db8a7d644ad0ceafb5c2c8aa53ee359c77f8911422b82af123a5bcf0455a06eabd96c59933b1f4f9cd1f7c92b43cf04f2fdbed482503183b06b854139b74bc
+  languageName: node
+  linkType: hard
+
+"@logtail/tools@npm:^0.5.6":
+  version: 0.5.6
+  resolution: "@logtail/tools@npm:0.5.6"
+  dependencies:
+    "@logtail/types": ^0.5.6
+  checksum: bb4bc8f29f47d707be86d6f8536f519a0f27cde5c8c78d93e9b9dea9e34b495fffab1fd5226a9996f093847c409e5d1c3e041e70c6bfb247f5ea5bde34e70ebb
+  languageName: node
+  linkType: hard
+
+"@logtail/types@npm:^0.5.6":
+  version: 0.5.6
+  resolution: "@logtail/types@npm:0.5.6"
+  checksum: 3ff81303b1aa9bdfb238abd5fc07f4310985b629d91d9058241bd1acfe5f835687e65e1d8c9574f83e94d51c04cc25bc7c1ec674e601217f54b3c0b9b7ed42f2
+  languageName: node
+  linkType: hard
+
+"@msgpack/msgpack@npm:^2.5.1":
+  version: 2.8.0
+  resolution: "@msgpack/msgpack@npm:2.8.0"
+  checksum: bead9393f57239007a2fe455df5277cbc03b125f14f310162a652b81471dcf3ab6780eaa24b36e20aa742998910a6840147d08b7267063b8e2de5d40c624360e
   languageName: node
   linkType: hard
 
@@ -1112,6 +1174,13 @@ __metadata:
   version: 1.2.0
   resolution: "@types/shimmer@npm:1.2.0"
   checksum: f081a31d826ce7bfe8cc7ba8129d2b1dffae44fd580eba4fcf741237646c4c2494ae6de2cada4b7713d138f35f4bc512dbf01311d813dee82020f97d7d8c491c
+  languageName: node
+  linkType: hard
+
+"@types/stack-trace@npm:^0.0.33":
+  version: 0.0.33
+  resolution: "@types/stack-trace@npm:0.0.33"
+  checksum: cec5fbbe3bdcdef82763f917e99ca35a1b92ac96aa7982d09548072c5eff219d8216cf75f1ccfeec9686c91a035cc0d55dda6a76a222022616de275dc5d3a8c1
   languageName: node
   linkType: hard
 
@@ -2205,6 +2274,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minimatch@npm:^9.0.5":
+  version: 9.0.5
+  resolution: "minimatch@npm:9.0.5"
+  dependencies:
+    brace-expansion: ^2.0.1
+  checksum: 2c035575eda1e50623c731ec6c14f65a85296268f749b9337005210bb2b34e2705f8ef1a358b188f69892286ab99dc42c8fb98a57bde55c8d81b3023c19cea28
+  languageName: node
+  linkType: hard
+
 "minimist@npm:^1.2.6":
   version: 1.2.8
   resolution: "minimist@npm:1.2.8"
@@ -2856,6 +2934,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"serialize-error@npm:8.1.0":
+  version: 8.1.0
+  resolution: "serialize-error@npm:8.1.0"
+  dependencies:
+    type-fest: ^0.20.2
+  checksum: 2eef236d50edd2d7926e602c14fb500dc3a125ee52e9f08f67033181b8e0be5d1122498bdf7c23c80683cddcad083a27974e9e7111ce23165f4d3bcdd6d65102
+  languageName: node
+  linkType: hard
+
 "set-blocking@npm:^2.0.0":
   version: 2.0.0
   resolution: "set-blocking@npm:2.0.0"
@@ -2974,6 +3061,13 @@ __metadata:
   dependencies:
     minipass: ^5.0.0
   checksum: fb14da9f8a72b04eab163eb13a9dda11d5962cd2317f85457c4e0b575e9a6e0e3a6a87b5bf122c75cb36565830cd5f263fb457571bf6f1587eb5f95d095d6165
+  languageName: node
+  linkType: hard
+
+"stack-trace@npm:0.0.10":
+  version: 0.0.10
+  resolution: "stack-trace@npm:0.0.10"
+  checksum: 473036ad32f8c00e889613153d6454f9be0536d430eb2358ca51cad6b95cea08a3cc33cc0e34de66b0dad221582b08ed2e61ef8e13f4087ab690f388362d6610
   languageName: node
   linkType: hard
 
@@ -3152,6 +3246,13 @@ __metadata:
   bin:
     tsx: dist/cli.js
   checksum: ddec149ad263e5c75fc8fde5c6ba7ec2ee390934c0a2e2c23897bacab83bc8c665955a23b608a19c42f49c14a7362cf74ad793b52cc94eda684be5c2c13fdb4d
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^0.20.2":
+  version: 0.20.2
+  resolution: "type-fest@npm:0.20.2"
+  checksum: 4fb3272df21ad1c552486f8a2f8e115c09a521ad7a8db3d56d53718d0c907b62c6e9141ba5f584af3f6830d0872c521357e512381f24f7c44acae583ad517d73
   languageName: node
   linkType: hard
 

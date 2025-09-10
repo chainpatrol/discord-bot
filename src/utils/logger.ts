@@ -12,16 +12,6 @@ function createLogger({
   level?: pino.LoggerOptions["level"];
   redact?: pino.LoggerOptions["redact"];
 }): Logger {
-  // In browser environment, use basic pino configuration
-  if (typeof window !== "undefined") {
-    return pino({
-      level,
-      name,
-      redact,
-      browser: { asObject: true },
-    });
-  }
-
   // Server-side logging configuration
   const targets: pino.TransportTargetOptions<Record<string, unknown>>[] = [];
 

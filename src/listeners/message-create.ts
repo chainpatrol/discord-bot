@@ -114,7 +114,14 @@ export default (client: CustomClient) => {
   logger.info("MessageCreate listener loaded.");
 
   client.on(Events.MessageCreate, async (message) => {
-    if (!isValidMessage(message)) return;
+    logger.debug(`[DEBUG] Message received: ${message.id} from ${message.author.tag} in ${message.channelId}`);
+    
+    if (!isValidMessage(message)) {
+      logger.debug(`[DEBUG] Message ${message.id} failed isValidMessage check (bot: ${message.author.bot}, guildId: ${message.guildId})`);
+      return;
+    }
+    
+    logger.debug(`[DEBUG] Message ${message.id} passed isValidMessage check`);
 
     posthog.capture({
       distinctId: message.guildId!,
@@ -129,13 +136,25 @@ export default (client: CustomClient) => {
     const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
       guildId: message.guildId!,
     });
+    
+    logger.debug(`[DEBUG] Connection status for guild ${message.guildId}: ${JSON.stringify(connectionStatus)}`);
 
-    if (!connectionStatus?.connected) return;
+    if (!connectionStatus?.connected) {
+      logger.debug(`[DEBUG] Guild ${message.guildId} is not connected, skipping`);
+      return;
+    }
 
     const discordConfig = await fetchDiscordConfig(message.guildId!);
-    if (!shouldMonitorChannel(discordConfig.config, message.channelId)) return;
+    logger.debug(`[DEBUG] Discord config for guild ${message.guildId}: monitoring=${discordConfig.config?.isMonitoringLinks}, channel=${message.channelId}`);
+    
+    if (!shouldMonitorChannel(discordConfig.config, message.channelId)) {
+      logger.debug(`[DEBUG] Channel ${message.channelId} should not be monitored, skipping`);
+      return;
+    }
 
     const possibleUrls = extractUrls(message.content);
+    logger.debug(`[DEBUG] Extracted URLs from message ${message.id}: ${possibleUrls?.join(", ") || "none"}`);
+    
     if (!possibleUrls) return;
 
     posthog.capture({
@@ -150,8 +169,12 @@ export default (client: CustomClient) => {
     });
 
     for (const url of possibleUrls) {
+      logger.debug(`[DEBUG] Checking URL: ${url}`);
       const response = await chainpatrol.asset.check({ content: url });
+      logger.debug(`[DEBUG] URL ${url} status: ${response.status}`);
+      
       if (response.status === "BLOCKED") {
+        logger.info(`[BLOCKED] URL ${url} is blocked, taking action: ${discordConfig.config?.responseAction}`);
         posthog.capture({
           distinctId: message.guildId!,
           event: "link_blocked",

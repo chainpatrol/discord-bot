@@ -5,22 +5,28 @@ import {
   CacheType,
   CommandInteraction,
   CommandInteractionOptionResolver,
+  ContextMenuCommandBuilder,
   DiscordAPIError,
   DiscordjsErrorCodes,
   EmbedBuilder,
+  Guild,
+  Message,
+  MessageContextMenuCommandInteraction,
   ModalActionRowComponentBuilder,
   ModalBuilder,
   SlashCommandBuilder,
+  TextChannel,
   TextInputBuilder,
   TextInputStyle,
   User,
+  UserContextMenuCommandInteraction,
 } from "discord.js";
 
 import { inspectDisputeButtons } from "~/helpers/buttons";
 import { chainpatrol, getDiscordGuildStatus, getReportsForOrg } from "~/utils/api";
 import { logger } from "~/utils/logger";
 import { posthog } from "~/utils/posthog";
-import { defangUrl } from "~/utils/url";
+import { defangUrl, extractUrls } from "~/utils/url";
 
 export const data = new SlashCommandBuilder()
   .setName("report")
@@ -29,78 +35,159 @@ export const data = new SlashCommandBuilder()
     option.setName("url").setDescription("The scam link to report").setRequired(true),
   );
 
-export async function execute(interaction: CommandInteraction) {
+export const userContextMenuData = new ContextMenuCommandBuilder()
+  .setName("Report User")
+  .setType(2);
+
+export const messageContextMenuData = new ContextMenuCommandBuilder()
+  .setName("Report Message")
+  .setType(3);
+
+export async function execute(
+  interaction:
+    | CommandInteraction
+    | UserContextMenuCommandInteraction
+    | MessageContextMenuCommandInteraction,
+) {
   posthog.capture({
     distinctId: interaction.guildId ?? "no-guild",
     event: "report_command",
   });
 
-  if (!interaction.isChatInputCommand()) return;
+  const { guildId, user } = interaction;
 
-  logger.info(`running report command (user.id=${interaction.user.id})`);
+  let urlInput: string;
+  let defaultDescription = "";
+  let defaultTitle = "";
 
-  const { guildId, user, options } = interaction;
-
-  const urlInput = options.getString("url", true);
-
-  // Check asset status
-  try {
-    const assetCheckResponse = await chainpatrol.asset.check({ content: urlInput });
-
-    if (assetCheckResponse.status === "BLOCKED") {
-      await interaction.reply({
-        content: `⚠️ **This link, \`${defangUrl(urlInput)}\`, is already Blocked by ChainPatrol.** No need to report it again.`,
-        ephemeral: true,
-        components: [inspectDisputeButtons(urlInput)],
-      });
-      return;
-    }
-
-    if (assetCheckResponse.status === "ALLOWED") {
-      await interaction.reply({
-        content: `⚠️ **This link, \`${defangUrl(urlInput)}\`, is on ChainPatrol's Allowlist.**`,
-        ephemeral: true,
-        components: [inspectDisputeButtons(urlInput)],
-      });
-      return;
-    }
-
-    if (assetCheckResponse.status === "UNKNOWN") {
-      // Check for existing reports
-      const guildStatus = await getDiscordGuildStatus(guildId ?? "");
-
-      const reports = await getReportsForOrg({
-        organizationSlug: guildStatus?.organizationSlug ?? "chainpatrol",
-        assetContents: [urlInput],
-      });
-
-      if (reports.reports.length > 0) {
-        await interaction.reply({
-          content: `⚠️ **This link, \`${defangUrl(urlInput)}\`, has already been reported to ChainPatrol.** The report is currently under review. Thank you for your vigilance!`,
-          ephemeral: true,
+  if (interaction.isChatInputCommand()) {
+    logger.info(`running report command (user.id=${interaction.user.id})`);
+    urlInput = interaction.options.getString("url", true);
+  } else if (interaction.isUserContextMenuCommand()) {
+    logger.info(`running report user context menu (user.id=${interaction.user.id}, target.id=${interaction.targetUser.id})`);
+    const targetUser = interaction.targetUser;
+    urlInput = `https://discord.com/users/${targetUser.id}`;
+    defaultTitle = `Discord User Report: ${targetUser.username}#${targetUser.discriminator}`;
+    
+    let recentMessagesText = "";
+    if (interaction.guild) {
+      try {
+        const messageFetchPromise = fetchUserRecentMessages(interaction.guild, targetUser.id, 5);
+        const timeoutPromise = new Promise<Array<{ content: string; channelId: string; createdAt: Date | null }>>((resolve) => {
+          setTimeout(() => resolve([]), 1500);
         });
-        return;
+        
+        const recentMessages = await Promise.race([messageFetchPromise, timeoutPromise]);
+        
+        if (recentMessages.length > 0) {
+          recentMessagesText = "\n\n**Recent Messages in Server:**\n";
+          recentMessages.forEach((msg, index) => {
+            const channelMention = msg.channelId ? `<#${msg.channelId}>` : "Unknown Channel";
+            const timestamp = msg.createdAt ? `<t:${Math.floor(msg.createdAt.getTime() / 1000)}:R>` : "";
+            const content = msg.content.substring(0, 200);
+            recentMessagesText += `${index + 1}. ${channelMention} ${timestamp}: ${content}${msg.content.length > 200 ? "..." : ""}\n`;
+          });
+        }
+      } catch (error) {
+        logger.error(error, "Error fetching recent messages for user report");
       }
     }
-  } catch (error) {
-    if (error instanceof DiscordAPIError) {
-      logger.error(
-        error,
-        "Discord API error while checking asset status (url=%s)",
-        urlInput,
-      );
-      throw error;
+    
+    defaultDescription = `Reporting user: ${targetUser.username}#${targetUser.discriminator} (ID: ${targetUser.id})\n\nUser link: ${urlInput}${recentMessagesText}\n\nReason: [Please provide details about why you're reporting this user]`;
+  } else if (interaction.isMessageContextMenuCommand()) {
+    logger.info(`running report message context menu (user.id=${interaction.user.id}, message.id=${interaction.targetMessage.id})`);
+    const targetMessage = interaction.targetMessage;
+    const messageUrls = extractUrls(targetMessage.content);
+    const messageLink = `https://discord.com/channels/${targetMessage.guildId}/${targetMessage.channelId}/${targetMessage.id}`;
+    
+    if (messageUrls && messageUrls.length > 0) {
+      urlInput = messageUrls[0];
+    } else {
+      urlInput = messageLink;
     }
-
-    await interaction.reply({
-      content: `⚠️ **Something went wrong while checking the status of this link, \`${defangUrl(urlInput)}\`.**`,
-      ephemeral: true,
-    });
+    
+    defaultTitle = `Discord Message Report`;
+    defaultDescription = `Reporting message from ${targetMessage.author.username}#${targetMessage.author.discriminator} (ID: ${targetMessage.author.id})\n\nMessage content: ${targetMessage.content.substring(0, 500)}${targetMessage.content.length > 500 ? "..." : ""}\n\nMessage link: ${messageLink}`;
+  } else {
     return;
   }
 
-  // Show the modal to the user
-  const modal = generateModal(user, options, guildId);
+  const isDiscordUserLink = urlInput.startsWith("https://discord.com/users/");
+  const isDiscordProtocol = urlInput.startsWith("discord://");
+  const isChatInputCommand = interaction.isChatInputCommand();
+
+  if (isChatInputCommand && !isDiscordProtocol && !isDiscordUserLink) {
+    try {
+      const assetCheckResponse = await chainpatrol.asset.check({ content: urlInput });
+
+      if (assetCheckResponse.status === "BLOCKED") {
+        await interaction.reply({
+          content: `⚠️ **This link, \`${defangUrl(urlInput)}\`, is already Blocked by ChainPatrol.** No need to report it again.`,
+          ephemeral: true,
+          components: [inspectDisputeButtons(urlInput)],
+        });
+        return;
+      }
+
+      if (assetCheckResponse.status === "ALLOWED") {
+        await interaction.reply({
+          content: `⚠️ **This link, \`${defangUrl(urlInput)}\`, is on ChainPatrol's Allowlist.**`,
+          ephemeral: true,
+          components: [inspectDisputeButtons(urlInput)],
+        });
+        return;
+      }
+
+      if (assetCheckResponse.status === "UNKNOWN") {
+        const guildStatus = await getDiscordGuildStatus(guildId ?? "");
+
+        const reports = await getReportsForOrg({
+          organizationSlug: guildStatus?.organizationSlug ?? "chainpatrol",
+          assetContents: [urlInput],
+        });
+
+        if (reports.reports.length > 0) {
+          await interaction.reply({
+            content: `⚠️ **This link, \`${defangUrl(urlInput)}\`, has already been reported to ChainPatrol.** The report is currently under review. Thank you for your vigilance!`,
+            ephemeral: true,
+          });
+          return;
+        }
+      }
+    } catch (error) {
+      if (error instanceof DiscordAPIError) {
+        logger.error(
+          error,
+          "Discord API error while checking asset status (url=%s)",
+          urlInput,
+        );
+        throw error;
+      }
+
+      await interaction.reply({
+        content: `⚠️ **Something went wrong while checking the status of this link, \`${defangUrl(urlInput)}\`.**`,
+        ephemeral: true,
+      });
+      return;
+    }
+  }
+
+  const options = interaction.isChatInputCommand()
+    ? interaction.options
+    : ({} as Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">);
+
+  const modal = generateModal(
+    user,
+    options,
+    guildId,
+    {
+      url: urlInput,
+      title: defaultTitle,
+      description: defaultDescription,
+      contactInfo: "",
+    },
+    interaction.isChatInputCommand() ? undefined : urlInput,
+  );
   await interaction.showModal(modal);
 
   // Wait for modal submission
@@ -248,6 +335,58 @@ export async function execute(interaction: CommandInteraction) {
   }
 }
 
+async function fetchUserRecentMessages(
+  guild: Guild,
+  userId: string,
+  limit: number = 5,
+): Promise<Array<{ content: string; channelId: string; createdAt: Date | null }>> {
+  const messages: Array<{ content: string; channelId: string; createdAt: Date | null }> = [];
+  
+  try {
+    const channels = await guild.channels.fetch();
+    const textChannels = Array.from(channels.values()).filter(
+      (channel): channel is TextChannel => !!channel && channel.isTextBased() && !channel.isDMBased(),
+    );
+
+    const fetchPromises = textChannels.slice(0, 10).map(async (channel) => {
+      try {
+        const fetchedMessages = await channel.messages.fetch({ limit: 20 });
+        return fetchedMessages
+          .filter((msg) => msg.author.id === userId && !msg.author.bot && msg.content.trim().length > 0)
+          .map((msg) => ({
+            content: msg.content,
+            channelId: channel.id,
+            createdAt: msg.createdAt,
+          }));
+      } catch (error) {
+        logger.debug(`Could not fetch messages from channel ${channel.id}: ${error}`);
+        return [];
+      }
+    });
+
+    const results = await Promise.allSettled(fetchPromises);
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        messages.push(...result.value);
+        if (messages.length >= limit * 3) {
+          break;
+        }
+      }
+    }
+
+    return messages
+      .sort((a, b) => {
+        const timeA = a.createdAt?.getTime() ?? 0;
+        const timeB = b.createdAt?.getTime() ?? 0;
+        return timeB - timeA;
+      })
+      .slice(0, limit);
+  } catch (error) {
+    logger.error(error, "Error fetching user recent messages");
+    return [];
+  }
+}
+
 function generateModal(
   user: User,
   options: Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">,
@@ -258,8 +397,9 @@ function generateModal(
     description: string;
     contactInfo: string;
   },
+  urlOverride?: string,
 ) {
-  const url = defaultValues?.url || options.getString("url", true);
+  const url = urlOverride || defaultValues?.url || options.getString?.("url", true) || "";
 
   const modal = new ModalBuilder()
     .setCustomId("reportModal")
@@ -267,10 +407,10 @@ function generateModal(
 
   const urlInput = new TextInputBuilder()
     .setCustomId("urlInput")
-    .setLabel("Scam link to be reported")
+    .setLabel("Scam link, user, or message to be reported")
     .setStyle(TextInputStyle.Short)
     .setValue(url)
-    .setPlaceholder("example.com");
+    .setPlaceholder("example.com or discord://user/123456789");
 
   const titleInput = new TextInputBuilder()
     .setCustomId("titleInput")

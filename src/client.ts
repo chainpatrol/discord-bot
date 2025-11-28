@@ -21,12 +21,25 @@ export class CustomClient extends Client {
     for (const filePath of filteredFiles) {
       const command = require(filePath);
 
-      // Set a new item in the Collection with the key as the command name and the value as the exported module
       if ("data" in command && "execute" in command) {
         this.commands.set(command.data.name, command);
-      } else {
+      }
+
+      if ("userContextMenuData" in command && "execute" in command) {
+        this.commands.set(command.userContextMenuData.name, command);
+      }
+
+      if ("messageContextMenuData" in command && "execute" in command) {
+        this.commands.set(command.messageContextMenuData.name, command);
+      }
+
+      if (
+        !("data" in command) &&
+        !("userContextMenuData" in command) &&
+        !("messageContextMenuData" in command)
+      ) {
         logger.warn(
-          `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
+          `[WARNING] The command at ${filePath} is missing a required "data", "userContextMenuData", "messageContextMenuData", or "execute" property.`,
         );
       }
     }

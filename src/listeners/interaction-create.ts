@@ -8,7 +8,11 @@ export default (client: CustomClient) => {
   logger.info("InteractionCreate listener loaded.");
 
   client.on(Events.InteractionCreate, async (interaction) => {
-    if (!interaction.isChatInputCommand()) {
+    if (
+      !interaction.isChatInputCommand() &&
+      !interaction.isUserContextMenuCommand() &&
+      !interaction.isMessageContextMenuCommand()
+    ) {
       return;
     }
 
@@ -31,12 +35,6 @@ export default (client: CustomClient) => {
 
       const content = `There was an unexpected error while executing this command!`;
 
-      /*
-        `.deferReply()` can be used with components (like buttons) in messages but can't be used with `.showModal`
-          
-        On error code `InteractionCollectorError` with modal                    - replied: true, deferred: false
-        On error code `InteractionCollectorError` without modal (buttons only)  - replied: true, deferred true | false
-      */
       if (interaction.isRepliable()) {
         if (!interaction.deferred && !interaction.replied) {
           await interaction.reply({ content, ephemeral: true });

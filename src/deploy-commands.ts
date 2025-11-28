@@ -14,10 +14,17 @@ const commands: any[] = [];
 // Grab all the command files from the commands directory you created earlier
 const { filteredFiles } = readDirectory("./src/commands");
 
-// Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
 for (const filePath of filteredFiles) {
   const command = require(filePath);
-  commands.push(command.data.toJSON());
+  if (command.data) {
+    commands.push(command.data.toJSON());
+  }
+  if (command.userContextMenuData) {
+    commands.push(command.userContextMenuData.toJSON());
+  }
+  if (command.messageContextMenuData) {
+    commands.push(command.messageContextMenuData.toJSON());
+  }
 }
 
 // Construct and prepare an instance of the REST module

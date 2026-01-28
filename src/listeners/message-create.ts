@@ -137,13 +137,13 @@ export default (client: CustomClient) => {
     }
 
     const discordConfig = await fetchDiscordConfig(message.guildId!);
-    
+
     if (!shouldMonitorChannel(discordConfig.config, message.channelId)) {
       return;
     }
 
     const possibleUrls = extractUrls(message.content);
-    
+
     if (!possibleUrls) return;
 
     posthog.capture({
@@ -159,9 +159,11 @@ export default (client: CustomClient) => {
 
     for (const url of possibleUrls) {
       const response = await chainpatrol.asset.check({ content: url });
-      
+
       if (response.status === "BLOCKED") {
-        logger.info(`Blocked URL detected - Guild: ${message.guildId}, Channel: ${message.channelId}, Action: ${discordConfig.config?.responseAction}`);
+        logger.info(
+          `Blocked URL detected - Guild: ${message.guildId}, Channel: ${message.channelId}, Action: ${discordConfig.config?.responseAction}`,
+        );
         posthog.capture({
           distinctId: message.guildId!,
           event: "link_blocked",

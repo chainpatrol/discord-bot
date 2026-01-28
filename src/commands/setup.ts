@@ -482,19 +482,35 @@ async function handleStatus(interaction: CommandInteraction) {
         isMonitoringAllChannels || monitoredChannels.includes(currentChannelId);
       const isModeratorChannel =
         discordConfig?.config?.moderatorChannelId === currentChannelId;
+      const feedChannelId = discordConfig?.config?.feedChannelId;
+      const isFeedEnabled = discordConfig?.config?.isFeedEnabled;
 
       let channelStatus = "";
+
+      if (isFeedEnabled && feedChannelId) {
+        channelStatus += `📢 Posting alerts to <#${feedChannelId}>\n`;
+      }
+
       if (isMonitoringAllChannels) {
         channelStatus += "🔍 All channels are being monitored for links.\n";
-      } else if (isMonitoredChannel) {
-        channelStatus += "🔍 This channel is actively monitored for links.\n";
+      } else if (monitoredChannels.length > 0) {
+        const monitoredChannelMentions = monitoredChannels
+          .map((id) => `<#${id}>`)
+          .join(", ");
+        channelStatus += `🔍 Monitoring channels: ${monitoredChannelMentions}\n`;
+        if (isMonitoredChannel) {
+          channelStatus += "  └ This channel is actively monitored.\n";
+        }
       }
+
       if (isModeratorChannel) {
         channelStatus += "👮 This channel is set as the moderator channel.\n";
+      } else if (discordConfig?.config?.moderatorChannelId) {
+        channelStatus += `👮 Moderator channel: <#${discordConfig.config.moderatorChannelId}>\n`;
       }
 
       await interaction.editReply({
-        content: `✅ This server is connected to ChainPatrol.\nOrganization: ${response.organizationName}\n\n${channelStatus}`,
+        content: `✅ This server is connected to ChainPatrol.\nOrganization: ${response.organizationName}\n\n${channelStatus || "No channels configured yet."}`,
       });
     } else {
       await interaction.editReply({

@@ -1,4 +1,5 @@
 import pino from "pino";
+
 import { env } from "~/env";
 
 export type Logger = pino.Logger;
@@ -28,10 +29,7 @@ function createLogger({
   }
 
   // Log to BetterStack in production
-  if (
-    env.NODE_ENV === "production" &&
-    env.BETTERSTACK_SOURCE_TOKEN
-  ) {
+  if (env.NODE_ENV === "production" && env.BETTERSTACK_SOURCE_TOKEN) {
     targets.push({
       level: "info",
       target: "@logtail/pino",
@@ -50,7 +48,7 @@ function createLogger({
 
   return pino(
     { level, name, redact },
-    targets.length > 0 ? pino.transport({ targets }) : undefined
+    targets.length > 0 ? pino.transport({ targets }) : undefined,
   );
 }
 

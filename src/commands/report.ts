@@ -64,26 +64,38 @@ export async function execute(
     logger.info(`running report command (user.id=${interaction.user.id})`);
     urlInput = interaction.options.getString("url", true);
   } else if (interaction.isUserContextMenuCommand()) {
-    logger.info(`running report user context menu (user.id=${interaction.user.id}, target.id=${interaction.targetUser.id})`);
+    logger.info(
+      `running report user context menu (user.id=${interaction.user.id}, target.id=${interaction.targetUser.id})`,
+    );
     const targetUser = interaction.targetUser;
     urlInput = `https://discord.com/users/${targetUser.id}`;
     defaultTitle = `Discord User Report: ${targetUser.username}#${targetUser.discriminator}`;
-    
+
     let recentMessagesText = "";
     if (interaction.guild) {
       try {
-        const messageFetchPromise = fetchUserRecentMessages(interaction.guild, targetUser.id, 5);
-        const timeoutPromise = new Promise<Array<{ content: string; channelId: string; createdAt: Date | null }>>((resolve) => {
+        const messageFetchPromise = fetchUserRecentMessages(
+          interaction.guild,
+          targetUser.id,
+          5,
+        );
+        const timeoutPromise = new Promise<
+          Array<{ content: string; channelId: string; createdAt: Date | null }>
+        >((resolve) => {
           setTimeout(() => resolve([]), 1500);
         });
-        
+
         const recentMessages = await Promise.race([messageFetchPromise, timeoutPromise]);
-        
+
         if (recentMessages.length > 0) {
           recentMessagesText = "\n\n**Recent Messages in Server:**\n";
           recentMessages.forEach((msg, index) => {
-            const channelMention = msg.channelId ? `<#${msg.channelId}>` : "Unknown Channel";
-            const timestamp = msg.createdAt ? `<t:${Math.floor(msg.createdAt.getTime() / 1000)}:R>` : "";
+            const channelMention = msg.channelId
+              ? `<#${msg.channelId}>`
+              : "Unknown Channel";
+            const timestamp = msg.createdAt
+              ? `<t:${Math.floor(msg.createdAt.getTime() / 1000)}:R>`
+              : "";
             const content = msg.content.substring(0, 200);
             recentMessagesText += `${index + 1}. ${channelMention} ${timestamp}: ${content}${msg.content.length > 200 ? "..." : ""}\n`;
           });
@@ -92,20 +104,22 @@ export async function execute(
         logger.error(error, "Error fetching recent messages for user report");
       }
     }
-    
+
     defaultDescription = `Reporting user: ${targetUser.username}#${targetUser.discriminator} (ID: ${targetUser.id})\n\nUser link: ${urlInput}${recentMessagesText}\n\nReason: [Please provide details about why you're reporting this user]`;
   } else if (interaction.isMessageContextMenuCommand()) {
-    logger.info(`running report message context menu (user.id=${interaction.user.id}, message.id=${interaction.targetMessage.id})`);
+    logger.info(
+      `running report message context menu (user.id=${interaction.user.id}, message.id=${interaction.targetMessage.id})`,
+    );
     const targetMessage = interaction.targetMessage;
     const messageUrls = extractUrls(targetMessage.content);
     const messageLink = `https://discord.com/channels/${targetMessage.guildId}/${targetMessage.channelId}/${targetMessage.id}`;
-    
+
     if (messageUrls && messageUrls.length > 0) {
       urlInput = messageUrls[0];
     } else {
       urlInput = messageLink;
     }
-    
+
     defaultTitle = `Discord Message Report`;
     defaultDescription = `Reporting message from ${targetMessage.author.username}#${targetMessage.author.discriminator} (ID: ${targetMessage.author.id})\n\nMessage content: ${targetMessage.content.substring(0, 500)}${targetMessage.content.length > 500 ? "..." : ""}\n\nMessage link: ${messageLink}`;
   } else {
@@ -174,7 +188,10 @@ export async function execute(
 
   const options = interaction.isChatInputCommand()
     ? interaction.options
-    : ({} as Omit<CommandInteractionOptionResolver<CacheType>, "getMessage" | "getFocused">);
+    : ({} as Omit<
+        CommandInteractionOptionResolver<CacheType>,
+        "getMessage" | "getFocused"
+      >);
 
   const modal = generateModal(
     user,
@@ -340,19 +357,26 @@ async function fetchUserRecentMessages(
   userId: string,
   limit: number = 5,
 ): Promise<Array<{ content: string; channelId: string; createdAt: Date | null }>> {
-  const messages: Array<{ content: string; channelId: string; createdAt: Date | null }> = [];
-  
+  const messages: Array<{ content: string; channelId: string; createdAt: Date | null }> =
+    [];
+
   try {
     const channels = await guild.channels.fetch();
     const textChannels = Array.from(channels.values()).filter(
-      (channel): channel is TextChannel => !!channel && channel.isTextBased() && !channel.isDMBased(),
+      (channel): channel is TextChannel =>
+        !!channel && channel.isTextBased() && !channel.isDMBased(),
     );
 
     const fetchPromises = textChannels.slice(0, 10).map(async (channel) => {
       try {
         const fetchedMessages = await channel.messages.fetch({ limit: 20 });
         return fetchedMessages
-          .filter((msg) => msg.author.id === userId && !msg.author.bot && msg.content.trim().length > 0)
+          .filter(
+            (msg) =>
+              msg.author.id === userId &&
+              !msg.author.bot &&
+              msg.content.trim().length > 0,
+          )
           .map((msg) => ({
             content: msg.content,
             channelId: channel.id,

@@ -52,13 +52,18 @@ export const data = new SlashCommandBuilder()
   )
   .addSubcommand((subcommand) =>
     subcommand
+      .setName("moderation")
+      .setDescription("sets up moderation monitoring in the current channel"),
+  )
+  .addSubcommand((subcommand) =>
+    subcommand
       .setName("linkmonitoring")
-      .setDescription("sets up link monitoring in the current channel"),
+      .setDescription("deprecated alias for /setup moderation"),
   )
   .addSubcommand((subcommand) =>
     subcommand
       .setName("ignore")
-      .setDescription("ignores the current channel from link monitoring"),
+      .setDescription("ignores the current channel from monitoring"),
   );
 
 export async function execute(interaction: CommandInteraction) {
@@ -84,8 +89,11 @@ export async function execute(interaction: CommandInteraction) {
     case "feed":
       await handleFeed(interaction);
       break;
+    case "moderation":
+      await handleLinkMonitoring(interaction, false);
+      break;
     case "linkmonitoring":
-      await handleLinkMonitoring(interaction);
+      await handleLinkMonitoring(interaction, true);
       break;
     case "ignore":
       await handleIgnore(interaction);
@@ -93,7 +101,10 @@ export async function execute(interaction: CommandInteraction) {
   }
 }
 
-async function handleLinkMonitoring(interaction: CommandInteraction) {
+async function handleLinkMonitoring(
+  interaction: CommandInteraction,
+  isDeprecatedAlias: boolean,
+) {
   if (!interaction.guildId) {
     await interaction.reply({
       content: "This command can only be used in a server.",
@@ -117,7 +128,7 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
   ) {
     await interaction.reply({
       content:
-        "❌ You need Administrator or Manage Server permissions to set up link monitoring.",
+        "❌ You need Administrator or Manage Server permissions to configure moderation monitoring.",
       ephemeral: true,
     });
     return;
@@ -128,6 +139,9 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
       config: {
         monitoredChannels: string[];
         isMonitoringLinks: boolean;
+        moderationMonitoringEnabled: boolean;
+        moderationProjectId: number | null;
+        moderationApiKey: string | null;
       } | null;
     }>({
       method: "POST",
@@ -138,6 +152,12 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
     const currentChannels = currentConfig?.config?.monitoredChannels || [];
     const isMonitoringAllChannels =
       currentConfig?.config?.isMonitoringLinks && currentChannels.length === 0;
+    const moderationMonitoringEnabled =
+      currentConfig?.config?.moderationMonitoringEnabled ?? false;
+    const hasModerationSetup = Boolean(
+      currentConfig?.config?.moderationApiKey &&
+        currentConfig?.config?.moderationProjectId,
+    );
 
     if (isMonitoringAllChannels) {
       const yesButton = new ButtonBuilder()
@@ -156,8 +176,11 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
       );
 
       const response = await interaction.reply({
-        content:
-          "Currently monitoring all channels. Would you like to switch to monitoring only this specific channel instead?",
+        content: `${
+          isDeprecatedAlias
+            ? "⚠️ `/setup linkmonitoring` is deprecated. Use `/setup moderation` going forward.\n\n"
+            : ""
+        }Currently monitoring all channels. Would you like to switch to monitoring only this specific channel instead?`,
         components: [row],
         ephemeral: true,
       });
@@ -180,12 +203,12 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
 
           await i.update({
             content:
-              "✅ Switched to monitoring only this channel. ChainPatrol will now monitor this channel for suspicious links and messages.",
+              "✅ Switched to monitoring only this channel. ChainPatrol moderation is now scoped to this channel.",
             components: [],
           });
         } else {
           await i.update({
-            content: "❌ Channel monitoring setup cancelled.",
+            content: "❌ Moderation monitoring setup cancelled.",
             components: [],
           });
         }
@@ -194,7 +217,7 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
       collector.on("end", async (collected) => {
         if (collected.size === 0) {
           await interaction.editReply({
-            content: "❌ Channel monitoring setup timed out. Please try again.",
+            content: "❌ Moderation monitoring setup timed out. Please try again.",
             components: [],
           });
         }
@@ -220,7 +243,7 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
 
       const response = await interaction.reply({
         content:
-          "This channel is currently being monitored. Would you like to **remove** it from monitoring?",
+          "This channel is currently being monitored for moderation. Would you like to remove it?",
         components: [row],
         ephemeral: true,
       });
@@ -232,20 +255,21 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
 
       collector.on("collect", async (i) => {
         if (i.customId === "confirm_remove_monitoring") {
+          const nextChannels = currentChannels.filter(
+            (id) => id !== interaction.channelId,
+          );
           await chainpatrol.fetch({
             method: "POST",
             path: ["v2", "internal", "updateDiscordConfig"],
             body: {
               guildId: interaction.guildId,
-              monitoredChannels: currentChannels.filter(
-                (id) => id !== interaction.channelId,
-              ),
+              monitoredChannels: nextChannels,
+              moderationMonitoringEnabled: nextChannels.length > 0,
             },
           });
 
           await i.update({
-            content:
-              "✅ Channel has been removed from monitoring. ChainPatrol will no longer monitor this channel for suspicious links and messages.",
+            content: "✅ Channel has been removed from moderation monitoring.",
             components: [],
           });
         } else {
@@ -279,10 +303,33 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(yesButton, noButton);
 
+    const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
+      guildId: interaction.guildId,
+    });
+    const dashboardUrl = connectionStatus?.organizationUrl
+      ? `${connectionStatus.organizationUrl}/settings/integrations`
+      : `${env.CHAINPATROL_API_URL}/dashboard`;
+    const setupModerationButton = new ButtonBuilder()
+      .setStyle(ButtonStyle.Link)
+      .setLabel("Set Up Moderation")
+      .setURL(dashboardUrl);
+    const setupRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      setupModerationButton,
+    );
+
+    const setupPrompt = hasModerationSetup
+      ? moderationMonitoringEnabled
+        ? "Would you like ChainPatrol moderation to monitor this channel? Moderation is already enabled for this server."
+        : "Would you like to enable ChainPatrol moderation for this channel?"
+      : "Would you like to set up channel monitoring? Moderation is not configured yet. Set your Moderation Project ID in the ChainPatrol dashboard to enable moderation.";
+
     const response = await interaction.reply({
-      content:
-        "Would you like ChainPatrol to monitor this channel for suspicious links and messages across our blocklist and security network?",
-      components: [row],
+      content: `${
+        isDeprecatedAlias
+          ? "⚠️ `/setup linkmonitoring` is deprecated. Use `/setup moderation` going forward.\n\n"
+          : ""
+      }${setupPrompt}`,
+      components: hasModerationSetup ? [row] : [row, setupRow],
       ephemeral: true,
     });
 
@@ -299,17 +346,19 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
           body: {
             guildId: interaction.guildId,
             monitoredChannels: [...currentChannels, interaction.channelId],
+            moderationMonitoringEnabled: hasModerationSetup,
           },
         });
 
         await i.update({
-          content:
-            "✅ Channel monitoring has been enabled. ChainPatrol will now monitor this channel for suspicious links and messages.",
+          content: hasModerationSetup
+            ? "✅ Moderation monitoring is enabled for this channel."
+            : `✅ Channel monitoring was saved, but moderation is not configured yet. Configure it in the dashboard: ${dashboardUrl}`,
           components: [],
         });
       } else {
         await i.update({
-          content: "❌ Channel monitoring setup cancelled.",
+          content: "❌ Moderation setup cancelled.",
           components: [],
         });
       }
@@ -318,16 +367,16 @@ async function handleLinkMonitoring(interaction: CommandInteraction) {
     collector.on("end", async (collected) => {
       if (collected.size === 0) {
         await interaction.editReply({
-          content: "❌ Channel monitoring setup timed out. Please try again.",
+          content: "❌ Moderation setup timed out. Please try again.",
           components: [],
         });
       }
     });
   } catch (error) {
-    logger.error("Error setting up link monitoring:", error);
+    logger.error("Error setting up moderation monitoring:", error);
     await interaction.reply({
       content:
-        "❌ There was an error setting up link monitoring. Please try again later.",
+        "❌ There was an error setting up moderation monitoring. Please try again later.",
       ephemeral: true,
     });
   }
@@ -460,13 +509,17 @@ async function handleStatus(interaction: CommandInteraction) {
           id: number;
           organizationId: number;
           isMonitoringLinks: boolean;
+          moderationMonitoringEnabled: boolean;
+          moderationProjectId: number | null;
+          moderationApiKey: string | null;
           moderatorUsernames: string[];
           guildId: string;
           feedChannelId: string | null;
           isFeedEnabled: boolean;
-          responseAction: "REACTION" | "NOTIFY";
+          responseAction: "REACTION" | "NOTIFY" | "DELETE" | null;
           moderatorChannelId: string | null;
           monitoredChannels: string[];
+          excludedChannels: string[];
         } | null;
       }>({
         method: "POST",
@@ -474,43 +527,70 @@ async function handleStatus(interaction: CommandInteraction) {
         body: { guildId: interaction.guildId },
       });
 
-      const currentChannelId = interaction.channelId;
-      const monitoredChannels = discordConfig?.config?.monitoredChannels || [];
-      const isMonitoringAllChannels =
-        discordConfig?.config?.isMonitoringLinks && monitoredChannels.length === 0;
-      const isMonitoredChannel =
-        isMonitoringAllChannels || monitoredChannels.includes(currentChannelId);
-      const isModeratorChannel =
-        discordConfig?.config?.moderatorChannelId === currentChannelId;
-      const feedChannelId = discordConfig?.config?.feedChannelId;
-      const isFeedEnabled = discordConfig?.config?.isFeedEnabled;
-
-      let channelStatus = "";
-
-      if (isFeedEnabled && feedChannelId) {
-        channelStatus += `📢 Posting alerts to <#${feedChannelId}>\n`;
-      }
-
-      if (isMonitoringAllChannels) {
-        channelStatus += "🔍 All channels are being monitored for links.\n";
-      } else if (monitoredChannels.length > 0) {
-        const monitoredChannelMentions = monitoredChannels
-          .map((id) => `<#${id}>`)
-          .join(", ");
-        channelStatus += `🔍 Monitoring channels: ${monitoredChannelMentions}\n`;
-        if (isMonitoredChannel) {
-          channelStatus += "  └ This channel is actively monitored.\n";
-        }
-      }
-
-      if (isModeratorChannel) {
-        channelStatus += "👮 This channel is set as the moderator channel.\n";
-      } else if (discordConfig?.config?.moderatorChannelId) {
-        channelStatus += `👮 Moderator channel: <#${discordConfig.config.moderatorChannelId}>\n`;
-      }
+      const config = discordConfig?.config;
+      const monitoredChannels = config?.monitoredChannels ?? [];
+      const excludedChannels = config?.excludedChannels ?? [];
+      const isAllChannelsScope = monitoredChannels.length === 0;
+      const channelScope = isAllChannelsScope
+        ? "All accessible channels (no explicit channel scope set)"
+        : monitoredChannels.map((id) => `<#${id}>`).join(", ");
+      const feedStatus =
+        config?.isFeedEnabled && config.feedChannelId
+          ? `Enabled (posting to <#${config.feedChannelId}>)`
+          : "Disabled";
+      const hasModerationConfig = Boolean(
+        config?.moderationApiKey && config?.moderationProjectId,
+      );
+      const moderationStatus = config?.moderationMonitoringEnabled
+        ? hasModerationConfig
+          ? "Enabled"
+          : "Blocked (missing moderation setup)"
+        : "Disabled";
+      const projectIdStatus = config?.moderationProjectId
+        ? String(config.moderationProjectId)
+        : "Not set";
+      const responseAction = config?.responseAction ?? "REACTION";
+      const moderatorChannel = config?.moderatorChannelId
+        ? `<#${config.moderatorChannelId}>`
+        : "Not set";
+      const organizationName = response.organizationName ?? "Unknown";
+      const dashboardLink = response.organizationUrl
+        ? `${response.organizationUrl}/settings/integrations`
+        : `${env.CHAINPATROL_API_URL}/dashboard`;
+      const excludedScope =
+        excludedChannels.length > 0
+          ? excludedChannels.map((id) => `<#${id}>`).join(", ")
+          : "None";
+      const nextStep = hasModerationConfig
+        ? isAllChannelsScope
+          ? "Moderation is currently active across all channels the bot can access. Run `/setup moderation` in a channel if you want to scope monitoring."
+          : "Moderation is active only in the configured scoped channels. Run `/setup moderation` in a channel to add or remove it from the scope."
+        : `Finish moderation setup in dashboard: ${dashboardLink}`;
+      const setupSummary = [
+        "**Connection**",
+        `- Status: Connected`,
+        `- Organization: ${organizationName}`,
+        "",
+        "**Monitoring**",
+        `- Moderation monitoring: ${moderationStatus}`,
+        `- Response action: ${responseAction}`,
+        `- Channel scope: ${channelScope}`,
+        `- Excluded channels: ${excludedScope}`,
+        "",
+        "**Moderation Config**",
+        `- Configured: ${hasModerationConfig ? "Yes" : "No"}`,
+        `- Project ID: ${projectIdStatus}`,
+        `- Moderator channel: ${moderatorChannel}`,
+        "",
+        "**Feed**",
+        `- ${feedStatus}`,
+        "",
+        "**Next Step**",
+        `- ${nextStep}`,
+      ].join("\n");
 
       await interaction.editReply({
-        content: `✅ This server is connected to ChainPatrol.\nOrganization: ${response.organizationName}\n\n${channelStatus || "No channels configured yet."}`,
+        content: `✅ **ChainPatrol Setup Status**\n\n${setupSummary}`,
       });
     } else {
       await interaction.editReply({
@@ -647,7 +727,7 @@ async function handleIgnore(interaction: CommandInteraction) {
     ) {
       await interaction.reply({
         content:
-          "❌ This channel is currently being monitored. Please remove it from monitoring first using `/setup linkmonitoring`.",
+          "❌ This channel is currently being monitored. Please remove it from monitoring first using `/setup moderation`.",
         ephemeral: true,
       });
       return;

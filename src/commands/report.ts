@@ -294,8 +294,10 @@ export async function execute(
         };
 
         try {
+          const guildStatus = guildId ? await getDiscordGuildStatus(guildId) : null;
           const response = await chainpatrol.report.create({
             discordGuildId: guildId ?? undefined,
+            organizationSlug: guildStatus?.organizationSlug ?? undefined,
             externalReporter: externalUser,
             title,
             description,

@@ -10,6 +10,11 @@ const envSchema = z.object({
   DISCORD_BOT_SECRET: z.string(),
   CHAINPATROL_API_URL: z.string().url(),
   CHAINPATROL_API_KEY: z.string(),
+  MODERATION_API_URL: z
+    .string()
+    .url()
+    .optional()
+    .default("https://moderation.chainpatrol.io"),
   TEST_DISCORD_SERVER_ID: z.string().optional(),
   DISCORD_DEPLOY_GLOBAL: z.coerce.boolean().optional().default(false),
   SENTRY_SECRET: z.string().optional(),

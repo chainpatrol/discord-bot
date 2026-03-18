@@ -306,8 +306,8 @@ async function handleLinkMonitoring(
     const connectionStatus = await ChainPatrolApiClient.fetchDiscordGuildStatus({
       guildId: interaction.guildId,
     });
-    const dashboardUrl = connectionStatus?.organizationUrl
-      ? `${connectionStatus.organizationUrl}/settings/integrations`
+    const dashboardUrl = connectionStatus?.organizationSlug
+      ? `${env.CHAINPATROL_API_URL}/admin/${connectionStatus.organizationSlug}/settings/integrations`
       : `${env.CHAINPATROL_API_URL}/dashboard`;
     const setupModerationButton = new ButtonBuilder()
       .setStyle(ButtonStyle.Link)
@@ -554,8 +554,8 @@ async function handleStatus(interaction: CommandInteraction) {
         ? `<#${config.moderatorChannelId}>`
         : "Not set";
       const organizationName = response.organizationName ?? "Unknown";
-      const dashboardLink = response.organizationUrl
-        ? `${response.organizationUrl}/settings/integrations`
+      const dashboardLink = response.organizationSlug
+        ? `${env.CHAINPATROL_API_URL}/admin/${response.organizationSlug}/settings/integrations`
         : `${env.CHAINPATROL_API_URL}/dashboard`;
       const excludedScope =
         excludedChannels.length > 0

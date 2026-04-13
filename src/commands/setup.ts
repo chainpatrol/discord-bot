@@ -64,6 +64,13 @@ export const data = new SlashCommandBuilder()
     subcommand
       .setName("ignore")
       .setDescription("ignores the current channel from monitoring"),
+  )
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName("autoban")
+      .setDescription(
+        "toggles auto-ban of blocked Discord users detected in monitored channels",
+      ),
   );
 
 export async function execute(interaction: CommandInteraction) {
@@ -97,6 +104,9 @@ export async function execute(interaction: CommandInteraction) {
       break;
     case "ignore":
       await handleIgnore(interaction);
+      break;
+    case "autoban":
+      await handleAutoBan(interaction);
       break;
   }
 }
@@ -520,6 +530,7 @@ async function handleStatus(interaction: CommandInteraction) {
           moderatorChannelId: string | null;
           monitoredChannels: string[];
           excludedChannels: string[];
+          isAutoBanEnabled: boolean;
         } | null;
       }>({
         method: "POST",
@@ -566,6 +577,7 @@ async function handleStatus(interaction: CommandInteraction) {
           ? "Moderation is currently active across all channels the bot can access. Run `/setup moderation` in a channel if you want to scope monitoring."
           : "Moderation is active only in the configured scoped channels. Run `/setup moderation` in a channel to add or remove it from the scope."
         : `Finish moderation setup in dashboard: ${dashboardLink}`;
+      const autoBanStatus = config?.isAutoBanEnabled ? "Enabled" : "Disabled";
       const setupSummary = [
         "**Connection**",
         `- Status: Connected`,
@@ -581,6 +593,9 @@ async function handleStatus(interaction: CommandInteraction) {
         `- Configured: ${hasModerationConfig ? "Yes" : "No"}`,
         `- Project ID: ${projectIdStatus}`,
         `- Moderator channel: ${moderatorChannel}`,
+        "",
+        "**Auto-Ban**",
+        `- ${autoBanStatus}`,
         "",
         "**Feed**",
         `- ${feedStatus}`,
@@ -792,6 +807,111 @@ async function handleIgnore(interaction: CommandInteraction) {
     logger.error("Error setting up channel ignore:", error);
     await interaction.reply({
       content: "❌ There was an error setting up channel ignore. Please try again later.",
+      ephemeral: true,
+    });
+  }
+}
+
+async function handleAutoBan(interaction: CommandInteraction) {
+  if (!interaction.guildId) {
+    await interaction.reply({
+      content: "This command can only be used in a server.",
+      ephemeral: true,
+    });
+    return;
+  }
+
+  if (
+    !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) &&
+    !interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)
+  ) {
+    await interaction.reply({
+      content:
+        "❌ You need Administrator or Manage Server permissions to configure auto-ban.",
+      ephemeral: true,
+    });
+    return;
+  }
+
+  try {
+    const currentConfig = await chainpatrol.fetch<{
+      config: {
+        isAutoBanEnabled: boolean;
+      } | null;
+    }>({
+      method: "POST",
+      path: ["v2", "internal", "getDiscordConfig"],
+      body: { guildId: interaction.guildId },
+    });
+
+    const isCurrentlyEnabled = currentConfig?.config?.isAutoBanEnabled ?? false;
+
+    const toggleButton = new ButtonBuilder()
+      .setCustomId("toggle_autoban")
+      .setLabel(isCurrentlyEnabled ? "Disable Auto-Ban" : "Enable Auto-Ban")
+      .setStyle(isCurrentlyEnabled ? ButtonStyle.Danger : ButtonStyle.Success);
+
+    const cancelButton = new ButtonBuilder()
+      .setCustomId("cancel_autoban")
+      .setLabel("Cancel")
+      .setStyle(ButtonStyle.Secondary);
+
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      toggleButton,
+      cancelButton,
+    );
+
+    const statusText = isCurrentlyEnabled ? "**enabled**" : "**disabled**";
+    const response = await interaction.reply({
+      content: `Auto-ban is currently ${statusText}.\n\nWhen enabled, the bot will automatically ban Discord users that are on ChainPatrol's blocklist when their IDs are detected in monitored channels. Unknown user IDs will be reported to ChainPatrol for review.\n\nThe bot requires the **Ban Members** permission to use this feature.`,
+      components: [row],
+      ephemeral: true,
+    });
+
+    const collector = response.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: 60000,
+    });
+
+    collector.on("collect", async (i) => {
+      if (i.customId === "toggle_autoban") {
+        const newValue = !isCurrentlyEnabled;
+
+        await chainpatrol.fetch({
+          method: "POST",
+          path: ["v2", "internal", "updateDiscordConfig"],
+          body: {
+            guildId: interaction.guildId,
+            isAutoBanEnabled: newValue,
+          },
+        });
+
+        await i.update({
+          content: newValue
+            ? "✅ Auto-ban has been **enabled**. The bot will now automatically ban blocked Discord users detected in monitored channels."
+            : "✅ Auto-ban has been **disabled**.",
+          components: [],
+        });
+      } else {
+        await i.update({
+          content: "❌ Auto-ban setup cancelled.",
+          components: [],
+        });
+      }
+    });
+
+    collector.on("end", async (collected) => {
+      if (collected.size === 0) {
+        await interaction.editReply({
+          content: "❌ Auto-ban setup timed out. Please try again.",
+          components: [],
+        });
+      }
+    });
+  } catch (error) {
+    logger.error("Error setting up auto-ban:", error);
+    await interaction.reply({
+      content: "❌ There was an error setting up auto-ban. Please try again later.",
       ephemeral: true,
     });
   }

@@ -132,7 +132,7 @@ const MODERATION_NOTICE_TTL_MS = 10000;
 const sendDeletionNotice = async (message: Message, categories: string[]) => {
   const categoryText = categories.length > 0 ? categories.join(", ") : "policy";
   const notice = await message.channel.send(
-    `<@${message.author.id}> your message was deleted for the flagged reason (${categoryText}) and admins were alerted.`,
+    `<@${message.author.id}> your message was deleted for the flagged reason (${categoryText}).`,
   );
   setTimeout(() => {
     void notice.delete().catch(() => {});

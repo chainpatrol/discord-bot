@@ -13,7 +13,33 @@ import {
 import { env } from "~/env";
 import { ChainPatrolApiClient, chainpatrol } from "~/utils/api";
 import { logger } from "~/utils/logger";
+import { type ModerationProbeResult, probeModerationProject } from "~/utils/moderation";
 import { posthog } from "~/utils/posthog";
+
+const formatProbeStatus = (probe: ModerationProbeResult): string => {
+  if (probe.ok) {
+    switch (probe.mode) {
+      case "enabled":
+        return "Enabled (project is active)";
+      case "dry_run":
+        return "⚠️ Dry run (results are NOT persisted - set mode to 'enabled' in the dashboard)";
+      case "disabled":
+        return "❌ Disabled (project mode is 'disabled' - set mode to 'enabled' in the dashboard)";
+    }
+  }
+  switch (probe.reason) {
+    case "project_disabled":
+      return "❌ Project disabled (set the moderation project to 'enabled' in the dashboard)";
+    case "project_not_found":
+      return "❌ Project not found (verify the moderation project ID in the dashboard)";
+    case "unauthorized":
+      return "❌ API key invalid (regenerate the moderation API key in the dashboard)";
+    case "network_error":
+      return "❌ Unreachable (network/DNS/TLS error - check the moderation service)";
+    case "unexpected_error":
+      return `❌ Unexpected error${probe.status ? ` (status ${probe.status})` : ""}`;
+  }
+};
 
 export const data = new SlashCommandBuilder()
   .setName("setup")
@@ -340,6 +366,27 @@ async function handleLinkMonitoring(
 
     collector.on("collect", async (i) => {
       if (i.customId === "confirm_monitoring") {
+        let probeWarning = "";
+        if (
+          hasModerationSetup &&
+          currentConfig?.config?.moderationApiKey &&
+          currentConfig?.config?.moderationProjectId
+        ) {
+          const probe = await probeModerationProject({
+            apiKey: currentConfig.config.moderationApiKey,
+            projectId: currentConfig.config.moderationProjectId,
+          });
+          if (probe.ok && probe.mode === "dry_run") {
+            probeWarning =
+              `\n\n⚠️ The moderation project is in **dry run** mode - results will NOT be persisted. ` +
+              `Set the project mode to 'enabled' in the dashboard: ${dashboardUrl}`;
+          } else if (probe.ok && probe.mode === "disabled") {
+            probeWarning = `\n\n❌ The moderation project mode is currently **'disabled'**. The bot will not act on messages until you set the project mode to 'enabled' in the dashboard: ${dashboardUrl}`;
+          } else if (!probe.ok) {
+            probeWarning = `\n\n❌ Moderation health check failed: ${formatProbeStatus(probe)}\nFix this in the dashboard: ${dashboardUrl}`;
+          }
+        }
+
         await chainpatrol.fetch({
           method: "POST",
           path: ["v2", "internal", "updateDiscordConfig"],
@@ -352,7 +399,7 @@ async function handleLinkMonitoring(
 
         await i.update({
           content: hasModerationSetup
-            ? "✅ Moderation monitoring is enabled for this channel."
+            ? `✅ Moderation monitoring is enabled for this channel.${probeWarning}`
             : `✅ Channel monitoring was saved, but moderation is not configured yet. Configure it in the dashboard: ${dashboardUrl}`,
           components: [],
         });
@@ -549,6 +596,19 @@ async function handleStatus(interaction: CommandInteraction) {
       const projectIdStatus = config?.moderationProjectId
         ? String(config.moderationProjectId)
         : "Not set";
+
+      let projectHealthStatus = "Not probed (moderation not configured)";
+      if (
+        hasModerationConfig &&
+        config?.moderationApiKey &&
+        config?.moderationProjectId
+      ) {
+        const probe = await probeModerationProject({
+          apiKey: config.moderationApiKey,
+          projectId: config.moderationProjectId,
+        });
+        projectHealthStatus = formatProbeStatus(probe);
+      }
       const responseAction = config?.responseAction ?? "REACTION";
       const moderatorChannel = config?.moderatorChannelId
         ? `<#${config.moderatorChannelId}>`
@@ -580,6 +640,7 @@ async function handleStatus(interaction: CommandInteraction) {
         "**Moderation Config**",
         `- Configured: ${hasModerationConfig ? "Yes" : "No"}`,
         `- Project ID: ${projectIdStatus}`,
+        `- Project health: ${projectHealthStatus}`,
         `- Moderator channel: ${moderatorChannel}`,
         "",
         "**Feed**",

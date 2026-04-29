@@ -11,6 +11,7 @@ import {
 
 import { CustomClient } from "~/client";
 import { ChainPatrolApiClient, chainpatrol } from "~/utils/api";
+import { extractDiscordUserIds, formatDiscordUserAssetUrl } from "~/utils/discord-user";
 import { logger } from "~/utils/logger";
 import { moderateText } from "~/utils/moderation";
 import { posthog } from "~/utils/posthog";
@@ -32,6 +33,7 @@ interface DiscordConfig {
     moderatorChannelId: string | null;
     monitoredChannels: string[];
     excludedChannels?: string[];
+    isAutoBanEnabled: boolean;
   } | null;
 }
 
@@ -180,6 +182,140 @@ const handleModerationFlag = async (
   }
 };
 
+const createAutoBanEmbed = (message: Message, userId: string) => {
+  const messageLink = `https://discord.com/channels/${message.guildId}/${message.channelId}/${message.id}`;
+  const userProfileUrl = formatDiscordUserAssetUrl(userId);
+
+  const embed = new EmbedBuilder()
+    .setColor(0xff0000)
+    .setTitle("🔨 Auto-Ban Executed")
+    .setDescription(
+      `A blocked Discord user was detected and banned from <#${message.channelId}>`,
+    )
+    .addFields(
+      { name: "Banned User", value: `<@${userId}> (${userId})` },
+      { name: "Profile", value: userProfileUrl },
+      { name: "Reported by", value: `<@${message.author.id}>` },
+    )
+    .setTimestamp();
+
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setLabel("Jump to Message")
+      .setStyle(ButtonStyle.Link)
+      .setURL(messageLink),
+  );
+
+  return { embed, row };
+};
+
+const handleAutoBan = async (
+  message: Message,
+  userId: string,
+  config: DiscordConfig["config"],
+) => {
+  if (!config || !message.guild) return;
+
+  try {
+    await message.guild.members.ban(userId, {
+      reason: "Blocked by ChainPatrol (auto-ban)",
+    });
+
+    logger.info(
+      {
+        autoban: {
+          event: "discord_user_auto_banned",
+          guildId: message.guildId,
+          channelId: message.channelId,
+          bannedUserId: userId,
+          reportedBy: message.author.id,
+        },
+      },
+      "Auto-banned blocked Discord user",
+    );
+
+    posthog.capture({
+      distinctId: message.guildId!,
+      event: "discord_user_auto_banned",
+      properties: {
+        guildId: message.guildId,
+        channelId: message.channelId,
+        bannedUserId: userId,
+        reportedBy: message.author.id,
+      },
+    });
+
+    if (config.moderatorChannelId) {
+      const moderatorChannel = await message.guild.channels.fetch(
+        config.moderatorChannelId,
+      );
+      if (moderatorChannel?.isTextBased()) {
+        const { embed, row } = createAutoBanEmbed(message, userId);
+        await moderatorChannel.send({
+          embeds: [embed],
+          components: [row],
+        });
+      }
+    }
+  } catch (error) {
+    logger.error(
+      {
+        autoban: {
+          event: "discord_user_auto_ban_failed",
+          guildId: message.guildId,
+          bannedUserId: userId,
+        },
+        error,
+      },
+      "Failed to auto-ban Discord user",
+    );
+  }
+};
+
+const handleAutoBanReport = async (message: Message, userId: string) => {
+  const userAssetUrl = formatDiscordUserAssetUrl(userId);
+
+  try {
+    await chainpatrol.report.create({
+      discordGuildId: message.guildId ?? undefined,
+      externalReporter: {
+        platform: "discord",
+        platformIdentifier: message.author.id,
+        avatarUrl: message.author.displayAvatarURL(),
+        displayName: `${message.author.username}#${message.author.discriminator}`,
+      },
+      title: `Discord User Report: ${userId}`,
+      description: `Auto-reported Discord user <@${userId}> (ID: ${userId}) detected in channel <#${message.channelId}>.`,
+      contactInfo: "",
+      assets: [{ content: userAssetUrl, status: "BLOCKED" }],
+    });
+
+    logger.info(
+      {
+        autoban: {
+          event: "discord_user_auto_reported",
+          guildId: message.guildId,
+          userId: userId,
+          reportedBy: message.author.id,
+        },
+      },
+      "Auto-reported unknown Discord user",
+    );
+  } catch (error) {
+    logger.error(
+      {
+        autoban: {
+          event: "discord_user_auto_report_failed",
+          guildId: message.guildId,
+          userId: userId,
+        },
+        error,
+      },
+      "Failed to auto-report Discord user",
+    );
+  }
+};
+
 const isValidMessage = (message: Message): boolean => {
   return !message.author.bot && !!message.guildId;
 };
@@ -192,7 +328,12 @@ const shouldMonitorChannel = (
   config: DiscordConfig["config"],
   channelId: string,
 ): boolean => {
-  if (!config?.isMonitoringLinks && !config?.moderationMonitoringEnabled) return false;
+  if (
+    !config?.isMonitoringLinks &&
+    !config?.moderationMonitoringEnabled &&
+    !config?.isAutoBanEnabled
+  )
+    return false;
   if (
     config.monitoredChannels.length > 0 &&
     !config.monitoredChannels.includes(channelId)
@@ -360,44 +501,93 @@ export default (client: CustomClient) => {
       );
     }
 
-    if (!discordConfig.config?.isMonitoringLinks) {
-      return;
-    }
+    if (discordConfig.config?.isMonitoringLinks) {
+      const possibleUrls = extractUrls(message.content);
 
-    const possibleUrls = extractUrls(message.content);
-
-    if (!possibleUrls) return;
-
-    posthog.capture({
-      distinctId: message.guildId!,
-      event: "link_checked",
-      properties: {
-        guildId: message.guildId,
-        channelId: message.channelId,
-        userId: message.author.id,
-        linkCount: possibleUrls.length,
-      },
-    });
-
-    for (const url of possibleUrls) {
-      const response = await chainpatrol.asset.check({ content: url });
-
-      if (response.status === "BLOCKED") {
-        logger.info(
-          `Blocked URL detected - Guild: ${message.guildId}, Channel: ${message.channelId}, Action: ${discordConfig.config?.responseAction}`,
-        );
+      if (possibleUrls) {
         posthog.capture({
           distinctId: message.guildId!,
-          event: "link_blocked",
+          event: "link_checked",
           properties: {
             guildId: message.guildId,
             channelId: message.channelId,
             userId: message.author.id,
-            url: url,
+            linkCount: possibleUrls.length,
           },
         });
-        await handleBlockedUrl(message, url, discordConfig.config);
-        return;
+
+        for (const url of possibleUrls) {
+          const response = await chainpatrol.asset.check({ content: url });
+
+          if (response.status === "BLOCKED") {
+            logger.info(
+              `Blocked URL detected - Guild: ${message.guildId}, Channel: ${message.channelId}, Action: ${discordConfig.config?.responseAction}`,
+            );
+            posthog.capture({
+              distinctId: message.guildId!,
+              event: "link_blocked",
+              properties: {
+                guildId: message.guildId,
+                channelId: message.channelId,
+                userId: message.author.id,
+                url: url,
+              },
+            });
+            await handleBlockedUrl(message, url, discordConfig.config);
+            return;
+          }
+        }
+      }
+    }
+
+    if (!discordConfig.config?.isAutoBanEnabled) {
+      return;
+    }
+
+    const detectedUserIds = extractDiscordUserIds(message.content).filter(
+      (id) => id !== message.author.id,
+    );
+
+    if (detectedUserIds.length === 0) {
+      return;
+    }
+
+    posthog.capture({
+      distinctId: message.guildId!,
+      event: "discord_user_ids_detected",
+      properties: {
+        guildId: message.guildId,
+        channelId: message.channelId,
+        userId: message.author.id,
+        detectedCount: detectedUserIds.length,
+      },
+    });
+
+    for (const userId of detectedUserIds) {
+      const assetUrl = formatDiscordUserAssetUrl(userId);
+
+      try {
+        const checkResponse = await chainpatrol.asset.check({
+          content: assetUrl,
+        });
+
+        if (checkResponse.status === "BLOCKED") {
+          await handleAutoBan(message, userId, discordConfig.config);
+        } else if (checkResponse.status === "UNKNOWN") {
+          await handleAutoBanReport(message, userId);
+        }
+      } catch (error) {
+        logger.error(
+          {
+            autoban: {
+              event: "discord_user_check_failed",
+              guildId: message.guildId,
+              userId,
+            },
+            error,
+          },
+          "Failed to check Discord user asset",
+        );
       }
     }
   });

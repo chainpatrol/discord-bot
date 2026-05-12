@@ -30,6 +30,30 @@ servers
 - :triangular_flag_on_post: Automatic notifications of potential scams to keep
   users informed and safe
 
+## Moderation delete webhook
+
+The moderation service can call this bot to delete a Discord message when a
+moderation action (for example `action.delete`) is executed for an entity that
+was submitted from Discord.
+
+- **Endpoint:** `POST /webhooks/moderation/delete` on the same port as the health
+  server (`PORT`, default `3232`).
+- **Auth:** HMAC-SHA256 headers `webhook-id`, `webhook-timestamp`,
+  `webhook-signature` (same scheme as moderation outbound webhooks). The signing
+  secret must match the env var **`MODERATION_WEBHOOK_SECRET`** (use the same
+  value as the `secret` on the moderation action config that targets this URL).
+- **Payload:** JSON body with `type` `action.delete` or `action.delete.test`,
+  `timestamp`, and `data` containing `entityId`, `authorId`, and `executionId`
+  (as sent by moderation). Test deliveries set `X-Test-Delivery: true` or use
+  `entityId` `test-entity-id`; the bot responds `200` without calling Discord.
+- **Entity ID:** Discord messages must use
+  `guildId:channelId:messageId` (three colon-separated snowflakes). The bot sends
+  this format when submitting text for moderation.
+
+After deploy, configure the moderation project’s delete action webhook URL and
+secret, then validate with a test delivery. Track operational setup in Linear
+[ENG-5463](https://linear.app/chainpatrol/issue/ENG-5463/ops-configure-moderation-delete-action-for-discord-bot-webhook).
+
 ## Contributing :raised_hands:
 
 We welcome contributions from anyone interested in enhancing the security of the

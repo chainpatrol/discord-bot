@@ -4,6 +4,7 @@ import http from "http";
 
 import { CustomClient } from "~/client";
 import { env } from "~/env";
+import { handleModerationDeleteWebhook } from "~/handlers/moderation-delete-webhook";
 
 import { logger } from "./utils/logger";
 
@@ -43,7 +44,9 @@ client.loadCommands();
 client.loadListeners();
 
 const healthCheckServer = http.createServer((req, res) => {
-  if (req.url === "/health" && req.method === "GET") {
+  const pathname = (req.url ?? "").split("?")[0] ?? "";
+
+  if (pathname === "/health" && req.method === "GET") {
     const isReady = client.isReady();
     res.writeHead(isReady ? 200 : 503, { "Content-Type": "application/json" });
     res.end(
@@ -52,10 +55,23 @@ const healthCheckServer = http.createServer((req, res) => {
         uptime: process.uptime(),
       }),
     );
-  } else {
-    res.writeHead(404);
-    res.end();
+    return;
   }
+
+  if (pathname === "/webhooks/moderation/delete" && req.method === "POST") {
+    void handleModerationDeleteWebhook(req, res, client, logger).catch((error) => {
+      logger.error({ error }, "Unhandled error in moderation delete webhook");
+      Sentry.captureException(error);
+      if (!res.writableEnded) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "internal_error" }));
+      }
+    });
+    return;
+  }
+
+  res.writeHead(404);
+  res.end();
 });
 
 healthCheckServer.listen(env.PORT, () => {

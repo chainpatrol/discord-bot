@@ -15,6 +15,7 @@ const envSchema = z.object({
     .url()
     .optional()
     .default("https://moderation.chainpatrol.io"),
+  MODERATION_WEBHOOK_SECRET: z.string(),
   TEST_DISCORD_SERVER_ID: z.string().optional(),
   DISCORD_DEPLOY_GLOBAL: z.coerce.boolean().optional().default(false),
   SENTRY_SECRET: z.string().optional(),

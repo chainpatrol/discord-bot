@@ -445,7 +445,7 @@ export default (client: CustomClient) => {
             apiKey: discordConfig.config.moderationApiKey,
             projectId: discordConfig.config.moderationProjectId,
             authorId: message.author.id,
-            entityId: `${message.guildId}:${message.id}`,
+            entityId: `${message.guildId}:${message.channelId}:${message.id}`,
             contextIds: [message.channelId],
           });
 

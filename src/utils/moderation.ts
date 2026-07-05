@@ -1,6 +1,8 @@
 import { env } from "~/env";
 import { logger } from "~/utils/logger";
 
+const USER_AGENT = "chainpatrol-discord-bot/1.0.0";
+
 type ModerationLabel = {
   score: number;
   flagged: boolean;
@@ -155,6 +157,7 @@ export const moderateText = async (
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "User-Agent": USER_AGENT,
         "x-chainpatrol-key": input.apiKey,
       },
       body: JSON.stringify({
@@ -282,6 +285,7 @@ export const probeModerationProject = async (input: {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "User-Agent": USER_AGENT,
         "x-chainpatrol-key": input.apiKey,
       },
       body: JSON.stringify({

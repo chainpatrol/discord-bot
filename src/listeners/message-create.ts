@@ -132,6 +132,7 @@ const createModerationNotificationEmbed = (message: Message, categories: string[
 const MODERATION_NOTICE_TTL_MS = 10000;
 
 const sendDeletionNotice = async (message: Message, categories: string[]) => {
+  if (!message.channel.isSendable()) return;
   const categoryText = categories.length > 0 ? categories.join(", ") : "policy";
   const notice = await message.channel.send(
     `<@${message.author.id}> your message was deleted for the flagged reason (${categoryText}).`,

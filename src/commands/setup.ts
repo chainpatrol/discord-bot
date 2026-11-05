@@ -3,6 +3,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ChannelType,
+  ChatInputCommandInteraction,
   CommandInteraction,
   ComponentType,
   GuildBasedChannel,
@@ -682,7 +683,7 @@ async function handleStatus(interaction: CommandInteraction) {
   }
 }
 
-async function handleFeed(interaction: CommandInteraction) {
+async function handleFeed(interaction: ChatInputCommandInteraction) {
   if (!interaction.guildId) {
     await interaction.reply({
       content: "This command can only be used in a server.",

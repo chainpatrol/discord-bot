@@ -84,12 +84,12 @@ export class ChainPatrolApiClient {
 export async function getReportsForOrg(input: {
   organizationSlug: string;
   assetContents: string[];
-}): Promise<{ reports: Report[] }> {
+}): Promise<{ reports: unknown[] }> {
   if (!input.organizationSlug) {
     input.organizationSlug = "chainpatrol";
   }
 
-  const response = await chainpatrol.fetch<{ reports: Report[] }>({
+  const response = await chainpatrol.fetch<{ reports: unknown[] }>({
     method: "POST",
     path: ["v2", "internal", "reports", "search"],
     body: input,

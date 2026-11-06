@@ -112,3 +112,30 @@ export async function getDiscordGuildStatus(
     return null;
   }
 }
+
+export type DiscordFeedConnectLinkInput = {
+  guildId: string;
+  channelId: string;
+  channelName: string;
+};
+
+/**
+ * A link to the feed connect page that carries a one-time ticket naming this
+ * server and channel, so the person clicking it cannot edit them (ENG-8788).
+ * Null if ChainPatrol could not make one; the caller falls back to the old link.
+ */
+export async function createDiscordFeedConnectLink(
+  input: DiscordFeedConnectLinkInput,
+): Promise<string | null> {
+  try {
+    const response = await chainpatrol.fetch<{ token: string; url: string }>({
+      method: "POST",
+      path: ["v2", "internal", "createDiscordFeedConnectToken"],
+      body: input,
+    });
+    return response.url;
+  } catch (error) {
+    logger.error(error, "Unable to create a Discord feed connect link");
+    return null;
+  }
+}

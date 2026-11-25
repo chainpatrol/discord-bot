@@ -12,7 +12,11 @@ import {
 } from "discord.js";
 
 import { env } from "~/env";
-import { ChainPatrolApiClient, chainpatrol } from "~/utils/api";
+import {
+  ChainPatrolApiClient,
+  chainpatrol,
+  createDiscordFeedConnectLink,
+} from "~/utils/api";
 import { logger } from "~/utils/logger";
 import { type ModerationProbeResult, probeModerationProject } from "~/utils/moderation";
 import { posthog } from "~/utils/posthog";
@@ -717,6 +721,14 @@ async function handleFeed(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    const connectFeedUrl =
+      (await createDiscordFeedConnectLink({
+        guildId: interaction.guildId,
+        channelId: channel.id,
+        channelName: channel.name,
+      })) ??
+      `${env.CHAINPATROL_API_URL}/admin/connect-feed/discord?guildId=${interaction.guildId}&channelId=${channel.id}&channelName=${channel.name}`;
+
     await interaction.editReply({
       content:
         "Click the button below to connect your ChainPatrol organization to this channel. After connecting, you can run `/setup status` to check the status of the bot's connection",
@@ -728,7 +740,7 @@ async function handleFeed(interaction: ChatInputCommandInteraction) {
               type: ComponentType.Button,
               style: ButtonStyle.Link,
               label: "Connect Feed",
-              url: `${env.CHAINPATROL_API_URL}/admin/connect-feed/discord?guildId=${interaction.guildId}&channelId=${channel.id}&channelName=${channel.name}`,
+              url: connectFeedUrl,
             },
           ],
         },

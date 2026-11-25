@@ -35,6 +35,9 @@
     "node": "^22.8.0"
   },
   "resolutions": {
-    "node-gyp": "^11.5.0"
+    "follow-redirects": "1.16.2",
+    "node-gyp": "^13.1.0",
+    "node-gyp/tar": "7.5.22",
+    "node-gyp/undici": "8.12.3"
   }
 }
